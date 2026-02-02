@@ -13,6 +13,7 @@ interface PlayerData {
   total_time_seconds: number | null;
   is_completed: boolean;
   created_at: string;
+  end_time: string | null;
 }
 
 const Admin = () => {
@@ -22,19 +23,18 @@ const Admin = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      navigate('/game');
+    if (!loading) {
+      if (!user) {
+        navigate('/auth');
+      } else if (!isAdmin) {
+        navigate('/game');
+      }
     }
   }, [user, loading, isAdmin, navigate]);
 
-  useEffect(() => {
-    if (isAdmin) {
-      fetchPlayers();
-    }
-  }, [isAdmin]);
+
 
   const fetchPlayers = async () => {
-    setIsLoading(true);
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -43,8 +43,36 @@ const Admin = () => {
     if (data && !error) {
       setPlayers(data as PlayerData[]);
     }
-    setIsLoading(false);
+    // Only set loading to false on initial fetch if it's still true
+    setIsLoading(prev => prev ? false : prev);
   };
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    fetchPlayers();
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          // Refresh the full list to ensure correct ordering and data consistency
+          fetchPlayers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin]);
 
   const formatTime = (seconds: number | null) => {
     if (seconds === null) return '—';
@@ -56,8 +84,13 @@ const Admin = () => {
     return `${s}s`;
   };
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '—';
+    return new Date(dateString).toLocaleString();
+  };
+
   const completedPlayers = players.filter(p => p.is_completed);
-  const activePlayers = players.filter(p => !p.is_completed && p.current_level > 1);
+  const activePlayers = players.filter(p => !p.is_completed && p.current_level >= 1);
 
   if (loading) {
     return (
@@ -79,7 +112,7 @@ const Admin = () => {
             </Button>
             <h1 className="text-xl font-display font-bold neon-text-purple">ADMIN DASHBOARD</h1>
           </div>
-          
+
           <Button variant="ghost" size="sm" onClick={fetchPlayers}>
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
@@ -109,7 +142,7 @@ const Admin = () => {
                   <Trophy className="w-6 h-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Completed</p>
+                  <p className="text-muted-foreground text-sm">Escaped Teams</p>
                   <p className="text-3xl font-display font-bold">{completedPlayers.length}</p>
                 </div>
               </div>
@@ -121,7 +154,7 @@ const Admin = () => {
                   <Clock className="w-6 h-6 text-warning" />
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Active Players</p>
+                  <p className="text-muted-foreground text-sm">Active Teams</p>
                   <p className="text-3xl font-display font-bold">{activePlayers.length}</p>
                 </div>
               </div>
@@ -131,15 +164,18 @@ const Admin = () => {
           {/* Players Table */}
           <div className="glass-panel rounded-xl overflow-hidden">
             <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-display font-bold">All Players</h2>
+              <h2 className="text-xl font-display font-bold">Team Progress</h2>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
                     <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
-                      Username
+                      Team / User
+                    </th>
+                    <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
+                      Registered At
                     </th>
                     <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
                       Current Level
@@ -148,7 +184,7 @@ const Admin = () => {
                       Levels Completed
                     </th>
                     <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
-                      Total Time
+                      Completed At
                     </th>
                     <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
                       Status
@@ -159,6 +195,7 @@ const Admin = () => {
                   {players.map((player) => (
                     <tr key={player.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                       <td className="p-4 font-medium">{player.username}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{formatDate(player.created_at)}</td>
                       <td className="p-4">
                         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-display font-bold">
                           {player.current_level}
@@ -169,19 +206,18 @@ const Admin = () => {
                           {[1, 2, 3, 4, 5].map((level) => (
                             <div
                               key={level}
-                              className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${
-                                player.completed_levels?.includes(level)
-                                  ? 'bg-success text-background'
-                                  : 'bg-muted text-muted-foreground'
-                              }`}
+                              className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${player.completed_levels?.includes(level)
+                                ? 'bg-success text-background'
+                                : 'bg-muted text-muted-foreground'
+                                }`}
                             >
                               {level}
                             </div>
                           ))}
                         </div>
                       </td>
-                      <td className="p-4 font-display">
-                        {formatTime(player.total_time_seconds)}
+                      <td className="p-4 text-sm text-muted-foreground">
+                        {player.is_completed ? formatDate(player.end_time) : '—'}
                       </td>
                       <td className="p-4">
                         {player.is_completed ? (
@@ -203,7 +239,7 @@ const Admin = () => {
                   ))}
                   {players.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
                         No players yet. Be the first to play!
                       </td>
                     </tr>

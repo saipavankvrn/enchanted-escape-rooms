@@ -26,7 +26,11 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/game');
+      if (user.email?.endsWith('@escape.edu.in')) {
+        navigate('/admin');
+      } else {
+        navigate('/game');
+      }
     }
   }, [user, navigate]);
 
@@ -36,10 +40,10 @@ const Auth = () => {
     setSuccess(null);
 
     try {
-      const validationData = isLogin 
-        ? { email, password } 
+      const validationData = isLogin
+        ? { email, password }
         : { email, password, username };
-      
+
       authSchema.parse(validationData);
     } catch (err) {
       if (err instanceof z.ZodError) {

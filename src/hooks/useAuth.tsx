@@ -49,6 +49,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const checkAdminRole = async (userId: string) => {
+    // Check if user email ends with @escape.edu.in
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email?.endsWith('@escape.edu.in')) {
+      setIsAdmin(true);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
