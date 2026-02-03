@@ -81,7 +81,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         totalTimeSeconds: data.total_time_seconds,
         isCompleted: data.is_completed || false,
       });
-      
+
       if (startTime && !data.is_completed) {
         setIsPlaying(true);
         const now = new Date();
@@ -97,7 +97,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
 
     const updateData: Record<string, unknown> = {};
-    
+
     if (newState.currentLevel !== undefined) updateData.current_level = newState.currentLevel;
     if (newState.completedLevels !== undefined) updateData.completed_levels = newState.completedLevels;
     if (newState.startTime !== undefined) updateData.start_time = newState.startTime?.toISOString();
@@ -128,16 +128,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (level === 1) {
       const newCompletedLevels = [...gameState.completedLevels, 1];
       const newCurrentLevel = 2;
-      
+
       setGameState(prev => ({
         ...prev,
         completedLevels: newCompletedLevels,
         currentLevel: newCurrentLevel,
       }));
-      
-      await saveGameState({ 
-        completedLevels: newCompletedLevels, 
-        currentLevel: newCurrentLevel 
+
+      await saveGameState({
+        completedLevels: newCompletedLevels,
+        currentLevel: newCurrentLevel
       });
       return true;
     }
@@ -145,17 +145,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // For levels 2-5, check the secret key
     const nextLevel = level + 1;
     const expectedKey = levelSecrets[nextLevel];
-    
+
     if (secretKey.toUpperCase() === expectedKey || level === 5) {
       const newCompletedLevels = [...gameState.completedLevels, level];
-      
+
       if (level === 5) {
         // Game completed!
         const now = new Date();
-        const totalTime = gameState.startTime 
+        const totalTime = gameState.startTime
           ? Math.floor((now.getTime() - gameState.startTime.getTime()) / 1000)
           : 0;
-        
+
         setGameState(prev => ({
           ...prev,
           completedLevels: newCompletedLevels,
@@ -165,7 +165,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           isCompleted: true,
         }));
         setIsPlaying(false);
-        
+
         await saveGameState({
           completedLevels: newCompletedLevels,
           currentLevel: 5,
@@ -179,7 +179,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           completedLevels: newCompletedLevels,
           currentLevel: nextLevel,
         }));
-        
+
         await saveGameState({
           completedLevels: newCompletedLevels,
           currentLevel: nextLevel,
@@ -187,7 +187,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
       return true;
     }
-    
+
     return false;
   }, [gameState.completedLevels, gameState.startTime, saveGameState]);
 
@@ -202,7 +202,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     });
     setElapsedTime(0);
     setIsPlaying(false);
-    
+
     await saveGameState({
       currentLevel: 1,
       completedLevels: [],
@@ -214,13 +214,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [saveGameState]);
 
   return (
-    <GameContext.Provider value={{ 
-      gameState, 
-      startGame, 
-      completeLevel, 
-      resetGame, 
+    <GameContext.Provider value={{
+      gameState,
+      startGame,
+      completeLevel,
+      resetGame,
       elapsedTime,
-      isPlaying 
+      isPlaying
     }}>
       {children}
     </GameContext.Provider>

@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trophy, Clock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface PlayerData {
   id: string;
@@ -174,9 +179,7 @@ const Admin = () => {
                     <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
                       Team / User
                     </th>
-                    <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
-                      Registered At
-                    </th>
+
                     <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
                       Current Level
                     </th>
@@ -195,11 +198,57 @@ const Admin = () => {
                   {players.map((player) => (
                     <tr key={player.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                       <td className="p-4 font-medium">{player.username}</td>
-                      <td className="p-4 text-sm text-muted-foreground">{formatDate(player.created_at)}</td>
+
                       <td className="p-4">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-display font-bold">
-                          {player.current_level}
-                        </span>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-display font-bold hover:bg-primary/30 transition-colors cursor-pointer ring-0 focus:outline-none focus:ring-2 focus:ring-primary/50">
+                              {player.current_level}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 p-4 glass-panel border-border/50 bg-[#0A0A0F]/95 backdrop-blur-xl">
+                            <div className="space-y-4">
+                              <div className="border-b border-border/50 pb-2">
+                                <h4 className="font-display font-bold text-lg text-primary">Level Progress</h4>
+                                <p className="text-xs text-muted-foreground">Team: {player.username}</p>
+                              </div>
+                              <div className="space-y-3">
+                                {[1, 2, 3, 4, 5].map((level) => {
+                                  const isCompleted = player.completed_levels?.includes(level);
+                                  const isLevel5 = level === 5;
+                                  const showTimestamp = isLevel5 && player.is_completed;
+                                  const timestamp = showTimestamp && player.end_time ? formatDate(player.end_time) : '—';
+
+                                  return (
+                                    <div key={level} className="flex items-center justify-between text-sm">
+                                      <div className="flex items-center gap-3">
+                                        <div className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${isCompleted ? 'bg-success text-background' : 'bg-muted/50 text-muted-foreground'
+                                          }`}>
+                                          {level}
+                                        </div>
+                                        <span className={isCompleted ? 'text-foreground font-medium' : 'text-muted-foreground'}>
+                                          Level {level}
+                                        </span>
+                                      </div>
+                                      <div className="text-right">
+                                        <div className="flex items-center justify-end gap-1.5 mb-0.5">
+                                          {isCompleted ? (
+                                            <span className="text-success text-xs font-medium">Completed</span>
+                                          ) : (
+                                            <span className="text-muted-foreground text-xs">Not Started</span>
+                                          )}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground font-mono">
+                                          {timestamp}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       </td>
                       <td className="p-4">
                         <div className="flex gap-1">
@@ -239,7 +288,7 @@ const Admin = () => {
                   ))}
                   {players.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
                         No players yet. Be the first to play!
                       </td>
                     </tr>

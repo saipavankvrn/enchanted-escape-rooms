@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 import SecretKeyInput from './SecretKeyInput';
+import PasswordRoom from './PasswordRoom';
 
 interface LevelPuzzleProps {
   level: number;
@@ -100,10 +101,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
 
       <div className="space-y-4">
         {level === 1 ? (
-          <Button onClick={handleAction} variant="cyber" size="xl" className="w-full">
-            {puzzle.action}
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
+          <PasswordRoom onKeyFound={(key) => onComplete(key)} />
         ) : showKeyInput ? (
           <SecretKeyInput onSubmit={handleKeySubmit} />
         ) : (
