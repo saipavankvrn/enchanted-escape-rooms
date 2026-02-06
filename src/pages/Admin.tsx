@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Users, Trophy, Clock, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, RefreshCw } from 'lucide-react';
+import { io } from 'socket.io-client';
 import {
   Popover,
   PopoverContent,
@@ -21,6 +21,9 @@ interface PlayerData {
   end_time: string | null;
 }
 
+const API_URL = 'http://localhost:5000/api/admin';
+const SOCKET_URL = 'http://localhost:5000';
+
 const Admin = () => {
   const { user, loading, isAdmin } = useAuth();
   const [players, setPlayers] = useState<PlayerData[]>([]);
@@ -37,19 +40,23 @@ const Admin = () => {
     }
   }, [user, loading, isAdmin, navigate]);
 
-
-
   const fetchPlayers = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (data && !error) {
-      setPlayers(data as PlayerData[]);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/players`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPlayers(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch players', error);
+    } finally {
+      setIsLoading(false);
     }
-    // Only set loading to false on initial fetch if it's still true
-    setIsLoading(prev => prev ? false : prev);
   };
 
   useEffect(() => {
@@ -57,25 +64,20 @@ const Admin = () => {
 
     fetchPlayers();
 
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-        },
-        (payload) => {
-          console.log('Real-time update received:', payload);
-          // Refresh the full list to ensure correct ordering and data consistency
-          fetchPlayers();
-        }
-      )
-      .subscribe();
+    // Socket.io connection
+    const socket = io(SOCKET_URL);
+
+    socket.on('connect', () => {
+      console.log('Connected to socket server');
+    });
+
+    socket.on('postgres_changes', (payload: any) => {
+      console.log('Real-time update received:', payload);
+      fetchPlayers();
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      socket.disconnect();
     };
   }, [isAdmin]);
 

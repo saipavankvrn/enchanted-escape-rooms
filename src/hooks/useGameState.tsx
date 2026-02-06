@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 interface GameState {
@@ -28,6 +27,8 @@ const levelSecrets: Record<number, string> = {
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
+
+const API_URL = 'http://localhost:5000/api/game';
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
@@ -65,50 +66,55 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const loadGameState = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('current_level, completed_levels, start_time, end_time, total_time_seconds, is_completed')
-      .eq('user_id', user.id)
-      .single();
-
-    if (data && !error) {
-      const startTime = data.start_time ? new Date(data.start_time) : null;
-      setGameState({
-        currentLevel: data.current_level || 1,
-        completedLevels: data.completed_levels || [],
-        startTime,
-        endTime: data.end_time ? new Date(data.end_time) : null,
-        totalTimeSeconds: data.total_time_seconds,
-        isCompleted: data.is_completed || false,
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/state`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      if (startTime && !data.is_completed) {
-        setIsPlaying(true);
-        const now = new Date();
-        const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-        setElapsedTime(elapsed);
-      } else if (data.total_time_seconds) {
-        setElapsedTime(data.total_time_seconds);
+      if (res.ok) {
+        const data = await res.json();
+
+        const startTime = data.start_time ? new Date(data.start_time) : null;
+        setGameState({
+          currentLevel: data.current_level || 1,
+          completedLevels: data.completed_levels || [],
+          startTime,
+          endTime: data.end_time ? new Date(data.end_time) : null,
+          totalTimeSeconds: data.total_time_seconds,
+          isCompleted: data.is_completed || false,
+        });
+
+        if (startTime && !data.is_completed) {
+          setIsPlaying(true);
+          const now = new Date();
+          const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+          setElapsedTime(elapsed);
+        } else if (data.total_time_seconds) {
+          setElapsedTime(data.total_time_seconds);
+        }
       }
+    } catch (error) {
+      console.error('Failed to load game state', error);
     }
   };
 
   const saveGameState = useCallback(async (newState: Partial<GameState>) => {
     if (!user) return;
 
-    const updateData: Record<string, unknown> = {};
-
-    if (newState.currentLevel !== undefined) updateData.current_level = newState.currentLevel;
-    if (newState.completedLevels !== undefined) updateData.completed_levels = newState.completedLevels;
-    if (newState.startTime !== undefined) updateData.start_time = newState.startTime?.toISOString();
-    if (newState.endTime !== undefined) updateData.end_time = newState.endTime?.toISOString();
-    if (newState.totalTimeSeconds !== undefined) updateData.total_time_seconds = newState.totalTimeSeconds;
-    if (newState.isCompleted !== undefined) updateData.is_completed = newState.isCompleted;
-
-    await supabase
-      .from('profiles')
-      .update(updateData)
-      .eq('user_id', user.id);
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${API_URL}/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newState)
+      });
+    } catch (error) {
+      console.error('Failed to save game state', error);
+    }
   }, [user]);
 
   const startGame = useCallback(() => {
@@ -206,11 +212,27 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     await saveGameState({
       currentLevel: 1,
       completedLevels: [],
-      startTime: undefined,
-      endTime: undefined,
-      totalTimeSeconds: undefined,
+      startTime: undefined, // undefined won't be sent in JSON stringify usually, handling needed?
+      // actually JSON.stringify will omit undefined. 
+      // But my backend checks `if (startTime !== undefined)`.
+      // So to reset, I might need to send null?
+      // My backend schema has default null.
+      // But update logic: `if (value !== undefined) updateData.val = val`.
+      // If I want to set it to null, I should pass null.
+      // JS undefined vs null.
+      // Let's pass `null` explicitly for resets if I want to clear it.
+    });
+
+    // Fix: Pass null for reset
+    await saveGameState({
+      currentLevel: 1,
+      completedLevels: [],
+      startTime: null as unknown as Date, // Hack to satisfy type if strict
+      endTime: null as unknown as Date,
+      totalTimeSeconds: null as unknown as number,
       isCompleted: false,
     });
+
   }, [saveGameState]);
 
   return (
