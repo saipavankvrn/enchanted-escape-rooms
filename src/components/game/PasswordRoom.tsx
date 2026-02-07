@@ -92,30 +92,12 @@ const PasswordRoom = ({ onKeyFound }: PasswordRoomProps) => {
                         </div>
                     )}
 
-                    {/* Door / Exit */}
+                    {/* Door / Exit - Removed to enforce key entry in main input */}
+                    {/* 
                     <div className="mt-auto">
-                        <Button
-                            size="lg"
-                            variant="neon"
-                            className={`w-48 h-16 text-lg font-bold gap-2 transition-all duration-500 ${unlocked
-                                ? "animate-pulse shadow-[0_0_20px_rgba(34,197,94,0.5)] bg-success/20 text-success border-success hover:bg-success/30"
-                                : "opacity-50 cursor-not-allowed hover:bg-transparent"
-                                }`}
-                            onClick={handleDoorClick}
-                        >
-                            {unlocked ? (
-                                <>
-                                    <Unlock className="w-6 h-6" />
-                                    ENTER DOOR
-                                </>
-                            ) : (
-                                <>
-                                    <Lock className="w-6 h-6" />
-                                    LOCKED
-                                </>
-                            )}
-                        </Button>
-                    </div>
+                        <Button ... /> 
+                    </div> 
+                    */}
 
                 </div>
             </div>

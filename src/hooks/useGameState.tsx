@@ -21,10 +21,12 @@ interface GameContextType {
 }
 
 const levelSecrets: Record<number, string> = {
+  1: 'LEVEL-1-COMPLETE',
   2: 'SHADOW',
   3: 'CIPHER',
   4: 'ENIGMA',
   5: 'ESCAPE',
+  // Note: Level 1 key is revealed in PasswordRoom
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -32,6 +34,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 const API_URL = `http://${window.location.hostname}:5000/api/game`;
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
+  // ... (existing state init) ...
   const { user } = useAuth();
   const [gameState, setGameState] = useState<GameState>({
     currentLevel: 1,
@@ -45,14 +48,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Load game state from database
+  // ... (existing effects) ...
   useEffect(() => {
     if (user) {
       loadGameState();
     }
   }, [user]);
 
-  // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isPlaying && gameState.startTime && !gameState.isCompleted) {
@@ -65,6 +67,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, [isPlaying, gameState.startTime, gameState.isCompleted]);
 
+  // ... (loadGameState, saveGameState, startGame unchanged) ...
   const loadGameState = async () => {
     if (!user) return;
 
@@ -133,39 +136,69 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [saveGameState]);
 
   const completeLevel = useCallback(async (level: number, secretKey: string): Promise<boolean> => {
-    // Level 1 completes without a key
-    if (level === 1) {
-      const now = new Date();
-      const newCompletedLevels = [...gameState.completedLevels, 1];
-      const newCurrentLevel = 2;
-      const newTimestamps = { ...gameState.levelTimestamps, 1: now.toISOString() };
+    // Check Secret Key for ALL levels now
+    // For level 1, the next level is 2. The key checks current level completion?
+    // Usually completeLevel(1, key) means "I am finishing level 1 with this key".
+    // So we check levelSecrets[1].
 
-      setGameState(prev => ({
-        ...prev,
-        completedLevels: newCompletedLevels,
-        currentLevel: newCurrentLevel,
-        levelTimestamps: newTimestamps,
-      }));
+    // Wait, levelSecrets logic previously was:
+    // const nextLevel = level + 1;
+    // const expectedKey = levelSecrets[nextLevel]; 
+    // This implies key for level 1 unlocks level 2? 
+    // Or "key found IN level 1" is the key to ENTER level 2?
+    // Typically "Level 1 Key" completes Level 1.
+    // Let's adjust logic to be: Key for Level X completes Level X.
 
-      await saveGameState({
-        completedLevels: newCompletedLevels,
-        currentLevel: newCurrentLevel,
-        levelTimestamps: newTimestamps
-      });
-      return true;
-    }
+    // Previous logic:
+    // const expectedKey = levelSecrets[nextLevel];
+    // This matched {2: 'SHADOW'} -> completing level 1 (next=2) needed 'SHADOW'.
+    // That seems weird. Usually you find 'SHADOW' in level 2?
+    // Let's look at LevelPuzzle.tsx.
+    // Level 2 Title "Shadow Realm". SecretHint "S _ _ _ _ W". 
+    // So 'SHADOW' is the answer for Level 2.
+    // So completeLevel(2, 'SHADOW') should succeed.
 
-    // For levels 2-5, check the secret key
-    const nextLevel = level + 1;
-    const expectedKey = levelSecrets[nextLevel];
+    // So if I call completeLevel(1, 'KEY'), I expect it to check levelSecrets[1].
+    // Previous logic was `levelSecrets[level + 1]`. 
+    // If I complete Level 2, next is 3. `levelSecrets[3]` is 'CIPHER'.
+    // But 'SHADOW' is capable of completing Level 2?
+    // No, wait. 
+    // previous logic: `if (secretKey.toUpperCase() === expectedKey || level === 5)`
+    // where `expectedKey = levelSecrets[nextLevel]`.
+    // So to complete Level 2 (going to 3), you needed `levelSecrets[3]` ('CIPHER')?
+    // That conflicts with the hint in Level 2 "S_ _ _ _ W".
 
-    if (secretKey.toUpperCase() === expectedKey || level === 5) {
+    // It seems the previous logic might have been:
+    // "To unlock Level X, you need Key X".
+    // So to complete Level 1 (and unlock 2), you need Key for 2?
+    // But Level 2 puzzle gives "SHADOW".
+    // If I am IN Level 2, and I solve it, I get "SHADOW". I enter "SHADOW".
+    // If `completeLevel(2, "SHADOW")` is called:
+    // nextLevel = 3. expectedKey = levelSecrets[3] = 'CIPHER'.
+    // "SHADOW" != "CIPHER". Fail.
+
+    // This implies the previous logic was potentially buggy or I misunderstood it.
+    // OR `levelSecrets` keys refer to the level they UNLOCK?
+    // `2: 'SHADOW'` -> Key to Unlock Level 2?
+    // But you find 'SHADOW' INSIDE Level 2.
+    // If you are inside Level 2, you are already unlocked.
+    // You want to complete it.
+
+    // Let's fix the logic to be intuitive:
+    // `levelSecrets[completedLevel]` is the key required to complete.
+    // So `levelSecrets[1]` = Key to complete Level 1.
+
+    const expectedKey = levelSecrets[level];
+
+    if (secretKey.toUpperCase() === expectedKey) {
+      // Logic for success
       const now = new Date();
       const newCompletedLevels = [...gameState.completedLevels, level];
+      const newCurrentLevel = level + 1;
       const newTimestamps = { ...gameState.levelTimestamps, [level]: now.toISOString() };
 
       if (level === 5) {
-        // Game completed!
+        // ... (existing level 5 logic)
         const totalTime = gameState.startTime
           ? Math.floor((now.getTime() - gameState.startTime.getTime()) / 1000)
           : 0;
@@ -193,13 +226,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         setGameState(prev => ({
           ...prev,
           completedLevels: newCompletedLevels,
-          currentLevel: nextLevel,
+          currentLevel: newCurrentLevel,
           levelTimestamps: newTimestamps
         }));
 
         await saveGameState({
           completedLevels: newCompletedLevels,
-          currentLevel: nextLevel,
+          currentLevel: newCurrentLevel,
           levelTimestamps: newTimestamps,
         });
       }

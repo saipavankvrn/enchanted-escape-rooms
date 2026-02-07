@@ -101,7 +101,14 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
 
       <div className="space-y-4">
         {level === 1 ? (
-          <PasswordRoom onKeyFound={(key) => onComplete(key)} />
+          <>
+            <PasswordRoom onKeyFound={(key) => {
+              // Optional: Auto-fill or copy to clipboard? 
+              // For now, PasswordRoom just shows the key visually.
+              // We don't call onComplete directly anymore from here.
+            }} />
+            {showKeyInput && <SecretKeyInput onSubmit={handleKeySubmit} />}
+          </>
         ) : showKeyInput ? (
           <SecretKeyInput onSubmit={handleKeySubmit} />
         ) : (

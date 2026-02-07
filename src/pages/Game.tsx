@@ -98,7 +98,8 @@ const Game = () => {
   };
 
   const showKeyInput = (level: number) => {
-    if (level === 1) return false;
+    // Enable key input for level 1 as well, so user can enter "LEVEL-1-COMPLETE"
+    if (level === 1) return true;
     return gameState.completedLevels.includes(level - 1);
   };
 
