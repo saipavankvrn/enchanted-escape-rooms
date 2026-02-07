@@ -43,6 +43,10 @@ const userSchema = new mongoose.Schema({
         type: Object, // Stores { 1: timestamp, 2: timestamp, ... }
         default: {}
     },
+    subTasksCompleted: {
+        type: Object, // Stores { 1: [task1, task2, ...], 2: [...] }
+        default: {}
+    },
     totalTimeSeconds: {
         type: Number,
         default: null

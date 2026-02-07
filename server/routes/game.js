@@ -49,6 +49,7 @@ router.post('/save', auth, async (req, res) => {
             startTime,
             endTime,
             levelTimestamps,
+            subTasksCompleted,
             totalTimeSeconds,
             isCompleted
         } = req.body;
@@ -59,6 +60,7 @@ router.post('/save', auth, async (req, res) => {
         if (startTime !== undefined) updateData.startTime = startTime;
         if (endTime !== undefined) updateData.endTime = endTime;
         if (levelTimestamps !== undefined) updateData.levelTimestamps = levelTimestamps;
+        if (subTasksCompleted !== undefined) updateData.subTasksCompleted = subTasksCompleted;
         if (totalTimeSeconds !== undefined) updateData.totalTimeSeconds = totalTimeSeconds;
         if (isCompleted !== undefined) updateData.isCompleted = isCompleted;
 

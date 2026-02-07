@@ -3,6 +3,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 import SecretKeyInput from './SecretKeyInput';
 import PasswordRoom from './PasswordRoom';
+import WhisperingPorch from './level1/WhisperingPorch';
+import HallOfMirrors from './level2/HallOfMirrors';
+import CursedLibrary from './level3/CursedLibrary';
+import EnigmaVault from './level4/EnigmaVault';
+import FinalEscape from './level5/FinalEscape';
 
 interface LevelPuzzleProps {
   level: number;
@@ -19,32 +24,32 @@ const puzzles = [
     secretHint: null,
   },
   {
-    title: "Shadow Realm",
-    description: "Darkness surrounds you. In the shadows, whispers speak of something that follows you but never leads... What am I?",
-    hint: "I am cast by light, yet I am not light itself.",
+    title: "The Hall of Mirrors",
+    description: "Identity is fluid here. Reflections lie. To find the key, you must discern truth from fabrication across three realms: Time, Space, and Voice.",
+    hint: "Check the tabs for different investigations. Look for inconsistencies.",
     action: "Solve & Proceed",
-    secretHint: "The answer is what follows you in the light: S _ _ _ _ W",
+    secretHint: "Collect the 3 shards to form the key: SH - AD - OW",
   },
   {
-    title: "Cipher Chamber",
-    description: "Ancient symbols cover the walls. A cryptic message reads: 'I am a secret code, used by spies and scholars alike. What am I?'",
-    hint: "Think of encryption and hidden messages.",
+    title: "The Cursed Library",
+    description: "Ancient texts and forbidden scrolls surround you. The knowledge is protected by layers of complexity. Only those who calculate strength can unlock the voltage gate.",
+    hint: "Find the strong passwords. Then order them by length.",
     action: "Decode & Proceed",
-    secretHint: "The answer is what encodes messages: C _ _ _ _ R",
+    secretHint: "Combine the fragments: CIP - HER",
   },
   {
-    title: "Enigma Vault",
-    description: "The vault door is sealed with a riddle: 'I am a puzzle within a puzzle, a mystery wrapped in wonder. Solve me, and the path shall open.'",
-    hint: "Think of something mysterious and puzzling.",
+    title: "The Enigma Vault",
+    description: "The vault door is locked by a database query. A vulnerability lies within the schema. Manipulate the input to bypass authentication.",
+    hint: "Identify the vulnerable column, then use SQL Injection on the username.",
     action: "Unravel & Proceed",
-    secretHint: "The answer is another word for mystery: E _ _ _ _ A",
+    secretHint: "The key is ENIGMA.",
   },
   {
-    title: "Final Escape",
-    description: "The exit is before you! One last challenge: 'I am what you seek, the end of your journey, the freedom you desire. What word describes leaving this place?'",
-    hint: "What do you want to do from this room?",
+    title: "The Final Escape",
+    description: "The core of the system. You must breach the firewall, decrypt the master sequence, and execute the override command.",
+    hint: "Network -> Cipher -> Terminal. Follow the flow.",
     action: "Complete & Escape!",
-    secretHint: "You want to E _ _ _ _ E from this room!",
+    secretHint: "Combine fragments: ES - CA - PE.",
   },
 ];
 
@@ -102,12 +107,63 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
       <div className="space-y-4">
         {level === 1 ? (
           <>
-            <PasswordRoom onKeyFound={(key) => {
-              // Optional: Auto-fill or copy to clipboard? 
-              // For now, PasswordRoom just shows the key visually.
-              // We don't call onComplete directly anymore from here.
-            }} />
-            {showKeyInput && <SecretKeyInput onSubmit={handleKeySubmit} />}
+            <WhisperingPorch />
+            {showKeyInput && (
+              <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <p className="text-center text-sm text-muted-foreground mb-4">
+                  SYSTEM KEY FRAGMENTS RECOVERED. ASSEMBLE TO PROCEED.
+                </p>
+                <SecretKeyInput onSubmit={handleKeySubmit} />
+              </div>
+            )}
+          </>
+        ) : level === 2 ? (
+          <>
+            <HallOfMirrors />
+            {showKeyInput && (
+              <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <p className="text-center text-sm text-muted-foreground mb-4">
+                  MIRROR SHARDS ALIGNED. KEY SYNTHESIS READY.
+                </p>
+                <SecretKeyInput onSubmit={handleKeySubmit} />
+              </div>
+            )}
+          </>
+        ) : level === 3 ? (
+          <>
+            <CursedLibrary />
+            {showKeyInput && (
+              <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <p className="text-center text-sm text-muted-foreground mb-4">
+                  VOLTAGE GATE OPEN. ENTER ACCESS CODE.
+                </p>
+                <SecretKeyInput onSubmit={handleKeySubmit} />
+              </div>
+            )}
+          </>
+        ) : level === 4 ? (
+          <>
+            <EnigmaVault />
+            {showKeyInput && (
+              <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <p className="text-center text-sm text-muted-foreground mb-4">
+                  DATABASE BREACHED. ADMIN ACCESS GRANTED.
+                </p>
+                <SecretKeyInput onSubmit={handleKeySubmit} />
+              </div>
+            )}
+          </>
+        ) : level === 5 ? (
+          <>
+            <FinalEscape />
+            {showKeyInput && (
+              <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <p className="text-center text-sm text-muted-foreground mb-4">
+                  SYSTEM OVERRIDE SUCCESSFUL. INITIATING FINAL PROTOCOL.
+                </p>
+                <SecretKeyInput onSubmit={handleKeySubmit} />
+              </div>
+            )}
           </>
         ) : showKeyInput ? (
           <SecretKeyInput onSubmit={handleKeySubmit} />
@@ -121,7 +177,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
           <Button
             onClick={() => setShowHint(true)}
             variant="ghost"
-            className="w-full text-muted-foreground hover:text-foreground"
+            className="w-full text-muted-foreground hover:text-primary"
           >
             <Lightbulb className="w-4 h-4 mr-2" />
             Need a hint?

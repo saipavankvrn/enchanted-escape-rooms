@@ -7,6 +7,7 @@ interface GameState {
   startTime: Date | null;
   endTime: Date | null;
   levelTimestamps: Record<number, string>; // ISO strings from DB or Date objects
+  subTasksCompleted: Record<number, string[]>;
   totalTimeSeconds: number | null;
   isCompleted: boolean;
 }
@@ -15,6 +16,7 @@ interface GameContextType {
   gameState: GameState;
   startGame: () => void;
   completeLevel: (level: number, secretKey: string) => Promise<boolean>;
+  completeSubTask: (level: number, taskId: string) => Promise<void>;
   resetGame: () => void;
   elapsedTime: number;
   isPlaying: boolean;
@@ -42,6 +44,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     startTime: null,
     endTime: null,
     levelTimestamps: {},
+    subTasksCompleted: {},
     totalTimeSeconds: null,
     isCompleted: false,
   });
@@ -87,6 +90,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           startTime,
           endTime: data.end_time ? new Date(data.end_time) : null,
           levelTimestamps: data.level_timestamps || {},
+          subTasksCompleted: data.sub_tasks_completed || {},
           totalTimeSeconds: data.total_time_seconds,
           isCompleted: data.is_completed || false,
         });
@@ -135,6 +139,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     saveGameState({ startTime: now, currentLevel: 1 });
   }, [saveGameState]);
 
+  const completeSubTask = useCallback(async (level: number, taskId: string) => {
+    const currentTasks = gameState.subTasksCompleted[level] || [];
+    if (currentTasks.includes(taskId)) return;
+
+    const newTasks = [...currentTasks, taskId];
+    const newSubTasksCompleted = { ...gameState.subTasksCompleted, [level]: newTasks };
+
+    setGameState(prev => ({
+      ...prev,
+      subTasksCompleted: newSubTasksCompleted
+    }));
+
+    await saveGameState({ subTasksCompleted: newSubTasksCompleted });
+  }, [gameState.subTasksCompleted, saveGameState]);
+
   const completeLevel = useCallback(async (level: number, secretKey: string): Promise<boolean> => {
     // Check Secret Key for ALL levels now
     // For level 1, the next level is 2. The key checks current level completion?
@@ -168,16 +187,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // So to complete Level 2 (going to 3), you needed `levelSecrets[3]` ('CIPHER')?
     // That conflicts with the hint in Level 2 "S_ _ _ _ W".
 
-    // It seems the previous logic might have been:
-    // "To unlock Level X, you need Key X".
-    // So to complete Level 1 (and unlock 2), you need Key for 2?
-    // But Level 2 puzzle gives "SHADOW".
-    // If I am IN Level 2, and I solve it, I get "SHADOW". I enter "SHADOW".
-    // If `completeLevel(2, "SHADOW")` is called:
-    // nextLevel = 3. expectedKey = levelSecrets[3] = 'CIPHER'.
-    // "SHADOW" != "CIPHER". Fail.
-
-    // This implies the previous logic was potentially buggy or I misunderstood it.
+    // This implies the previous logic might have been buggy or I misunderstood it.
     // OR `levelSecrets` keys refer to the level they UNLOCK?
     // `2: 'SHADOW'` -> Key to Unlock Level 2?
     // But you find 'SHADOW' INSIDE Level 2.
@@ -249,6 +259,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       startTime: null,
       endTime: null,
       levelTimestamps: {},
+      subTasksCompleted: {},
       totalTimeSeconds: null,
       isCompleted: false,
     });
@@ -286,6 +297,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       gameState,
       startGame,
       completeLevel,
+      completeSubTask,
       resetGame,
       elapsedTime,
       isPlaying

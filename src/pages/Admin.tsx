@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Trophy, Clock, RefreshCw } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { TeamList } from '@/components/admin/TeamList';
+import { GameMasterGuide } from '@/components/admin/sections/GameMasterGuide';
 import { PlayerData } from '@/types/admin';
 import { toast } from 'sonner';
 
@@ -148,48 +149,53 @@ const Admin = () => {
       </header>
 
       {/* Main Content */}
-      <main className="pt-24 pb-8">
-        <div className="container mx-auto px-4">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="glass-panel rounded-xl p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-sm">Total Players</p>
-                  <p className="text-3xl font-display font-bold">{players.length}</p>
-                </div>
-              </div>
-            </div>
+      <main className="container mx-auto px-4 py-24 pb-12 space-y-12">
 
-            <div className="glass-panel rounded-xl p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-success" />
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-sm">Escaped Teams</p>
-                  <p className="text-3xl font-display font-bold">{completedPlayers.length}</p>
-                </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="glass-panel rounded-xl p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Users className="w-6 h-6 text-primary" />
               </div>
-            </div>
-
-            <div className="glass-panel rounded-xl p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-warning/20 flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-warning" />
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-sm">Active Teams</p>
-                  <p className="text-3xl font-display font-bold">{activePlayers.length}</p>
-                </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Total Players</p>
+                <p className="text-3xl font-display font-bold">{players.length}</p>
               </div>
             </div>
           </div>
 
-          {/* Players Table / TeamList */}
+          <div className="glass-panel rounded-xl p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-success/20 flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-success" />
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Escaped Teams</p>
+                <p className="text-3xl font-display font-bold">{completedPlayers.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-xl p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-lg bg-warning/20 flex items-center justify-center">
+                <Clock className="w-6 h-6 text-warning" />
+              </div>
+              <div>
+                <p className="text-muted-foreground text-sm">Active Teams</p>
+                <p className="text-3xl font-display font-bold">{activePlayers.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Live Leaderboard */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-primary" />
+            <h2 className="text-2xl font-display font-bold text-white">Live Leaderboard</h2>
+          </div>
           <TeamList
             teams={players}
             onDeductTime={(id) => handleTimeAdjustment(id, 'deduct')}
@@ -197,6 +203,12 @@ const Admin = () => {
             onResetLevel={handleResetLevel}
           />
         </div>
+
+        {/* Game Master Guide */}
+        <div className="pt-8 border-t border-white/10">
+          <GameMasterGuide />
+        </div>
+
       </main>
     </div>
   );
