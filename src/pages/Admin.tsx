@@ -4,25 +4,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Trophy, Clock, RefreshCw } from 'lucide-react';
 import { io } from 'socket.io-client';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { TeamList } from '@/components/admin/TeamList';
+import { PlayerData } from '@/types/admin';
+import { toast } from 'sonner';
 
-interface PlayerData {
-  id: string;
-  username: string;
-  current_level: number;
-  completed_levels: number[];
-  total_time_seconds: number | null;
-  is_completed: boolean;
-  created_at: string;
-  end_time: string | null;
-}
-
-const API_URL = 'http://localhost:5000/api/admin';
-const SOCKET_URL = 'http://localhost:5000';
+const API_URL = `http://${window.location.hostname}:5000/api/admin`;
+const SOCKET_URL = `http://${window.location.hostname}:5000`;
 
 const Admin = () => {
   const { user, loading, isAdmin } = useAuth();
@@ -81,20 +68,54 @@ const Admin = () => {
     };
   }, [isAdmin]);
 
-  const formatTime = (seconds: number | null) => {
-    if (seconds === null) return '—';
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0) return `${h}h ${m}m ${s}s`;
-    if (m > 0) return `${m}m ${s}s`;
-    return `${s}s`;
+  const handleResetLevel = async (id: string, level: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/players/${id}/reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ level })
+      });
+
+      if (res.ok) {
+        toast.success(`Team reset to Level ${level}`);
+        fetchPlayers();
+      } else {
+        toast.error('Failed to reset level');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Error resetting level');
+    }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '—';
-    return new Date(dateString).toLocaleString();
+  const handleTimeAdjustment = async (id: string, type: 'add' | 'deduct') => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/players/${id}/time`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ seconds: 300, action: type }) // 5 minutes = 300s
+      });
+
+      if (res.ok) {
+        toast.success(type === 'add' ? 'Time added (+5m)' : 'Time deducted (-5m)');
+        fetchPlayers();
+      } else {
+        toast.error('Failed to update time');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Error updating time');
+    }
   };
+
 
   const completedPlayers = players.filter(p => p.is_completed);
   const activePlayers = players.filter(p => !p.is_completed && p.current_level >= 1);
@@ -168,137 +189,13 @@ const Admin = () => {
             </div>
           </div>
 
-          {/* Players Table */}
-          <div className="glass-panel rounded-xl overflow-hidden">
-            <div className="p-6 border-b border-border">
-              <h2 className="text-xl font-display font-bold">Team Progress</h2>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
-                      Team / User
-                    </th>
-
-                    <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
-                      Current Level
-                    </th>
-                    <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
-                      Levels Completed
-                    </th>
-                    <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
-                      Completed At
-                    </th>
-                    <th className="text-left p-4 font-display text-sm uppercase tracking-wider text-muted-foreground">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {players.map((player) => (
-                    <tr key={player.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="p-4 font-medium">{player.username}</td>
-
-                      <td className="p-4">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-display font-bold hover:bg-primary/30 transition-colors cursor-pointer ring-0 focus:outline-none focus:ring-2 focus:ring-primary/50">
-                              {player.current_level}
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80 p-4 glass-panel border-border/50 bg-[#0A0A0F]/95 backdrop-blur-xl">
-                            <div className="space-y-4">
-                              <div className="border-b border-border/50 pb-2">
-                                <h4 className="font-display font-bold text-lg text-primary">Level Progress</h4>
-                                <p className="text-xs text-muted-foreground">Team: {player.username}</p>
-                              </div>
-                              <div className="space-y-3">
-                                {[1, 2, 3, 4, 5].map((level) => {
-                                  const isCompleted = player.completed_levels?.includes(level);
-                                  const isLevel5 = level === 5;
-                                  const showTimestamp = isLevel5 && player.is_completed;
-                                  const timestamp = showTimestamp && player.end_time ? formatDate(player.end_time) : '—';
-
-                                  return (
-                                    <div key={level} className="flex items-center justify-between text-sm">
-                                      <div className="flex items-center gap-3">
-                                        <div className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${isCompleted ? 'bg-success text-background' : 'bg-muted/50 text-muted-foreground'
-                                          }`}>
-                                          {level}
-                                        </div>
-                                        <span className={isCompleted ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                                          Level {level}
-                                        </span>
-                                      </div>
-                                      <div className="text-right">
-                                        <div className="flex items-center justify-end gap-1.5 mb-0.5">
-                                          {isCompleted ? (
-                                            <span className="text-success text-xs font-medium">Completed</span>
-                                          ) : (
-                                            <span className="text-muted-foreground text-xs">Not Started</span>
-                                          )}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground font-mono">
-                                          {timestamp}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map((level) => (
-                            <div
-                              key={level}
-                              className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${player.completed_levels?.includes(level)
-                                ? 'bg-success text-background'
-                                : 'bg-muted text-muted-foreground'
-                                }`}
-                            >
-                              {level}
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="p-4 text-sm text-muted-foreground">
-                        {player.is_completed ? formatDate(player.end_time) : '—'}
-                      </td>
-                      <td className="p-4">
-                        {player.is_completed ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-success/20 text-success text-xs font-medium">
-                            <Trophy className="w-3 h-3" />
-                            Escaped
-                          </span>
-                        ) : player.current_level > 1 ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
-                            Playing
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
-                            Not Started
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {players.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                        No players yet. Be the first to play!
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {/* Players Table / TeamList */}
+          <TeamList
+            teams={players}
+            onDeductTime={(id) => handleTimeAdjustment(id, 'deduct')}
+            onAddTime={(id) => handleTimeAdjustment(id, 'add')}
+            onResetLevel={handleResetLevel}
+          />
         </div>
       </main>
     </div>

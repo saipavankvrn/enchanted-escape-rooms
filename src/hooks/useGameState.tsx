@@ -28,7 +28,7 @@ const levelSecrets: Record<number, string> = {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-const API_URL = 'http://localhost:5000/api/game';
+const API_URL = `http://${window.location.hostname}:5000/api/game`;
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();

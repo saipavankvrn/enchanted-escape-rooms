@@ -43,7 +43,7 @@ const Game = () => {
     }
 
     const success = await completeLevel(selectedLevel, key || '');
-    
+
     if (success) {
       if (selectedLevel === 5) {
         toast.success('🎉 Congratulations! You escaped!', {
@@ -107,21 +107,21 @@ const Game = () => {
       <header className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-border/50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-display font-bold neon-text">ESCAPE ROOM</h1>
-          
+
           <div className="flex items-center gap-4">
             <Timer seconds={elapsedTime} isRunning={isPlaying} />
-            
+
             {isAdmin && (
               <Button variant="neonPurple" size="sm" onClick={() => navigate('/admin')}>
                 <Shield className="w-4 h-4 mr-2" />
                 Admin
               </Button>
             )}
-            
+
             <Button variant="ghost" size="sm" onClick={handleReset}>
               <RotateCcw className="w-4 h-4" />
             </Button>
-            
+
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4" />
             </Button>
