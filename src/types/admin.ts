@@ -8,6 +8,7 @@ export interface PlayerData {
     created_at: string;
     end_time: string | null;
     start_time?: string; // Add start_time if backend returns it (it should)
+    level_timestamps?: Record<number, string>; // { 1: iso_date_string, ... }
 }
 
 export interface Team extends PlayerData {

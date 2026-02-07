@@ -14,10 +14,18 @@ interface LevelModalProps {
     onClose: () => void;
     teamName: string;
     levelsCompleted: number[];
-    levelStartTimes?: (string | null)[]; // Optional if not tracked precisely per level
+    levelTimestamps?: Record<number, string>; // Replaced array with map
+    gameStartTime?: string;
     currentLevel: number;
     onResetLevel: (level: number) => void;
 }
+
+const formatTime = (ms: number) => {
+    const seconds = Math.floor(ms / 1000);
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s}s`;
+};
 
 export const LevelModal: React.FC<LevelModalProps> = ({
     isOpen,
@@ -25,8 +33,51 @@ export const LevelModal: React.FC<LevelModalProps> = ({
     teamName,
     levelsCompleted,
     currentLevel,
+    levelTimestamps,
+    gameStartTime,
     onResetLevel
 }) => {
+    const getDuration = (level: number) => {
+        // Determine Start of this level
+        let startTime: number | null = null;
+
+        if (level === 1) {
+            if (gameStartTime) {
+                startTime = new Date(gameStartTime).getTime();
+            }
+        } else {
+            const prevTimestampStr = levelTimestamps ? levelTimestamps[level - 1] : null;
+            if (prevTimestampStr) {
+                startTime = new Date(prevTimestampStr).getTime();
+            }
+        }
+
+        // Determine End of this level
+        const currentTimestampStr = levelTimestamps ? levelTimestamps[level] : null;
+        let endTime = currentTimestampStr ? new Date(currentTimestampStr).getTime() : null;
+
+        // If level is completed but no timestamp (legacy data), we can't show duration
+        const isCompleted = levelsCompleted.includes(level);
+        if (isCompleted && !endTime) {
+            return 'Legacy (No Time)';
+        }
+
+        // If level is current (active) and not completed, use Now as end time for display
+        // Note: This won't tick live unless we add a state, but it will show snapshot on open
+        if (currentLevel === level && !isCompleted && startTime) {
+            // Check if we are "in" the level. 
+            // If we have startTime, we are in it.
+            endTime = Date.now();
+        }
+
+        if (startTime && endTime) {
+            // Prevent negative time if clocks out of sync or something weird
+            return formatTime(Math.max(0, endTime - startTime));
+        }
+
+        return '--';
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="glass-panel border-primary/20 bg-[#0A0A0F]/95 text-foreground max-w-2xl">
@@ -46,10 +97,10 @@ export const LevelModal: React.FC<LevelModalProps> = ({
                             <div
                                 key={levelNum}
                                 className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${isCompleted
-                                        ? 'bg-success/20 border-success text-success'
-                                        : isCurrent
-                                            ? 'bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(139,92,246,0.3)]'
-                                            : 'bg-muted/10 border-muted text-muted-foreground'
+                                    ? 'bg-success/20 border-success text-success'
+                                    : isCurrent
+                                        ? 'bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(139,92,246,0.3)]'
+                                        : 'bg-muted/10 border-muted text-muted-foreground'
                                     }`}
                             >
                                 <div className="font-bold mb-2">LVL {levelNum}</div>
@@ -60,6 +111,10 @@ export const LevelModal: React.FC<LevelModalProps> = ({
                                 ) : (
                                     <Circle className="w-6 h-6" />
                                 )}
+
+                                <div className="text-[10px] mt-1 font-mono opacity-80 h-4 min-w-[50px] text-center">
+                                    {getDuration(levelNum)}
+                                </div>
 
                                 <div className="mt-4 w-full">
                                     <Button

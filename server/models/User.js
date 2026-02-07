@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    levelTimestamps: {
+        type: Object, // Stores { 1: timestamp, 2: timestamp, ... }
+        default: {}
+    },
     totalTimeSeconds: {
         type: Number,
         default: null

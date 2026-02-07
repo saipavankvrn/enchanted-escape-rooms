@@ -234,6 +234,8 @@ export const TeamList: React.FC<TeamListProps> = ({
                     teamName={selectedTeam.username}
                     levelsCompleted={selectedTeam.completed_levels}
                     currentLevel={selectedTeam.current_level}
+                    levelTimestamps={selectedTeam.level_timestamps}
+                    gameStartTime={selectedTeam.start_time}
                     onResetLevel={(level) => {
                         onResetLevel(selectedTeam.id, level);
                         setSelectedTeam(null);

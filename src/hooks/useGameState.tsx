@@ -6,6 +6,7 @@ interface GameState {
   completedLevels: number[];
   startTime: Date | null;
   endTime: Date | null;
+  levelTimestamps: Record<number, string>; // ISO strings from DB or Date objects
   totalTimeSeconds: number | null;
   isCompleted: boolean;
 }
@@ -37,6 +38,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     completedLevels: [],
     startTime: null,
     endTime: null,
+    levelTimestamps: {},
     totalTimeSeconds: null,
     isCompleted: false,
   });
@@ -81,6 +83,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           completedLevels: data.completed_levels || [],
           startTime,
           endTime: data.end_time ? new Date(data.end_time) : null,
+          levelTimestamps: data.level_timestamps || {},
           totalTimeSeconds: data.total_time_seconds,
           isCompleted: data.is_completed || false,
         });
@@ -132,18 +135,22 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const completeLevel = useCallback(async (level: number, secretKey: string): Promise<boolean> => {
     // Level 1 completes without a key
     if (level === 1) {
+      const now = new Date();
       const newCompletedLevels = [...gameState.completedLevels, 1];
       const newCurrentLevel = 2;
+      const newTimestamps = { ...gameState.levelTimestamps, 1: now.toISOString() };
 
       setGameState(prev => ({
         ...prev,
         completedLevels: newCompletedLevels,
         currentLevel: newCurrentLevel,
+        levelTimestamps: newTimestamps,
       }));
 
       await saveGameState({
         completedLevels: newCompletedLevels,
-        currentLevel: newCurrentLevel
+        currentLevel: newCurrentLevel,
+        levelTimestamps: newTimestamps
       });
       return true;
     }
@@ -153,11 +160,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const expectedKey = levelSecrets[nextLevel];
 
     if (secretKey.toUpperCase() === expectedKey || level === 5) {
+      const now = new Date();
       const newCompletedLevels = [...gameState.completedLevels, level];
+      const newTimestamps = { ...gameState.levelTimestamps, [level]: now.toISOString() };
 
       if (level === 5) {
         // Game completed!
-        const now = new Date();
         const totalTime = gameState.startTime
           ? Math.floor((now.getTime() - gameState.startTime.getTime()) / 1000)
           : 0;
@@ -167,6 +175,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           completedLevels: newCompletedLevels,
           currentLevel: 5,
           endTime: now,
+          levelTimestamps: newTimestamps,
           totalTimeSeconds: totalTime,
           isCompleted: true,
         }));
@@ -176,6 +185,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           completedLevels: newCompletedLevels,
           currentLevel: 5,
           endTime: now,
+          levelTimestamps: newTimestamps,
           totalTimeSeconds: totalTime,
           isCompleted: true,
         });
@@ -184,18 +194,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           ...prev,
           completedLevels: newCompletedLevels,
           currentLevel: nextLevel,
+          levelTimestamps: newTimestamps
         }));
 
         await saveGameState({
           completedLevels: newCompletedLevels,
           currentLevel: nextLevel,
+          levelTimestamps: newTimestamps,
         });
       }
       return true;
     }
 
     return false;
-  }, [gameState.completedLevels, gameState.startTime, saveGameState]);
+  }, [gameState.completedLevels, gameState.startTime, gameState.levelTimestamps, saveGameState]);
 
   const resetGame = useCallback(async () => {
     setGameState({
@@ -203,6 +215,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       completedLevels: [],
       startTime: null,
       endTime: null,
+      levelTimestamps: {},
       totalTimeSeconds: null,
       isCompleted: false,
     });

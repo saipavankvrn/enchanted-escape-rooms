@@ -7,14 +7,19 @@ import Room3D from '@/components/game/Room3D';
 import LevelCard from '@/components/game/LevelCard';
 import LevelPuzzle from '@/components/game/LevelPuzzle';
 import Timer from '@/components/game/Timer';
-import { LogOut, Trophy, RotateCcw, Shield } from 'lucide-react';
+import { LogOut, Trophy, Shield, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+
+const TOTAL_TIME = 50 * 60; // 50 minutes in seconds
 
 const Game = () => {
   const { user, signOut, loading, isAdmin } = useAuth();
-  const { gameState, startGame, completeLevel, resetGame, elapsedTime, isPlaying } = useGameState();
+  const { gameState, startGame, completeLevel, elapsedTime, isPlaying } = useGameState();
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const navigate = useNavigate();
+
+  const remainingTime = Math.max(0, TOTAL_TIME - elapsedTime);
+  const isDefeated = elapsedTime >= TOTAL_TIME && !gameState.isCompleted && (isPlaying || gameState.startTime !== null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -23,12 +28,14 @@ const Game = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    if (gameState.currentLevel && !gameState.isCompleted) {
+    if (gameState.currentLevel && !gameState.isCompleted && !isDefeated) {
       setSelectedLevel(gameState.currentLevel);
     }
-  }, [gameState.currentLevel, gameState.isCompleted]);
+  }, [gameState.currentLevel, gameState.isCompleted, isDefeated]);
 
   const handleLevelClick = (level: number) => {
+    if (isDefeated) return;
+
     if (!gameState.completedLevels.includes(level - 1) && level !== 1 && level !== gameState.currentLevel) {
       return;
     }
@@ -36,7 +43,7 @@ const Game = () => {
   };
 
   const handleCompleteLevel = async (key?: string) => {
-    if (!selectedLevel) return;
+    if (!selectedLevel || isDefeated) return;
 
     if (selectedLevel === 1 && !isPlaying) {
       startGame();
@@ -58,12 +65,6 @@ const Game = () => {
     } else {
       toast.error('Wrong key! Try again.');
     }
-  };
-
-  const handleReset = () => {
-    resetGame();
-    setSelectedLevel(1);
-    toast.info('Game reset. Start again!');
   };
 
   const handleSignOut = async () => {
@@ -101,6 +102,77 @@ const Game = () => {
     return gameState.completedLevels.includes(level - 1);
   };
 
+  if (isDefeated) {
+    return (
+      <div className="min-h-screen escape-gradient">
+        <header className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-border/50">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <h1 className="text-xl font-display font-bold neon-text">ESCAPE ROOM</h1>
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </header>
+        <div className="container mx-auto px-4 py-12 pt-24">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="mb-8">
+              <AlertTriangle className="w-24 h-24 mx-auto text-destructive animate-pulse" />
+            </div>
+            <h2 className="text-4xl font-display font-bold text-destructive mb-4">
+              MISSION FAILED
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8">
+              Time has run out. The Shadow has taken control.
+            </p>
+            <div className="glass-panel rounded-2xl p-8 mb-8">
+              <p className="text-muted-foreground mb-2">You survived for</p>
+              <p className="text-5xl font-display font-bold text-muted-foreground">
+                50m 00s
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const getLevelDuration = (level: number) => {
+    if (!gameState.startTime) return null;
+
+    let start = gameState.startTime;
+    if (level > 1) {
+      const prevTimestamp = gameState.levelTimestamps[level - 1];
+      if (!prevTimestamp) return null; // Previous level not finished yet? Should be impossible if unlocked.
+      start = new Date(prevTimestamp);
+    }
+
+    let end = new Date(); // Default to now if playing
+    const levelTimestamp = gameState.levelTimestamps[level];
+
+    // If level is completed, use its timestamp
+    if (gameState.completedLevels.includes(level)) {
+      if (levelTimestamp) {
+        end = new Date(levelTimestamp);
+      }
+      // If completed but no timestamp (legacy data), maybe use next level's start? 
+      // Or just fail gracefully.
+    } else if (gameState.currentLevel === level && isPlaying) {
+      // If current level, use now.
+      end = new Date();
+    } else if (gameState.isCompleted && level === 5) {
+      // If game completed and checking level 5
+      if (gameState.endTime) end = gameState.endTime;
+    } else {
+      // Level locked or not started
+      return null;
+    }
+
+    const durationSeconds = Math.max(0, Math.floor((end.getTime() - start.getTime()) / 1000));
+    return formatTime(durationSeconds);
+  };
+
   return (
     <div className="min-h-screen escape-gradient">
       {/* Header */}
@@ -109,7 +181,7 @@ const Game = () => {
           <h1 className="text-xl font-display font-bold neon-text">ESCAPE ROOM</h1>
 
           <div className="flex items-center gap-4">
-            <Timer seconds={elapsedTime} isRunning={isPlaying} />
+            <Timer seconds={remainingTime} isRunning={isPlaying && !isDefeated} />
 
             {isAdmin && (
               <Button variant="neonPurple" size="sm" onClick={() => navigate('/admin')}>
@@ -117,10 +189,6 @@ const Game = () => {
                 Admin
               </Button>
             )}
-
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              <RotateCcw className="w-4 h-4" />
-            </Button>
 
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4" />
@@ -149,10 +217,15 @@ const Game = () => {
                   {formatTime(gameState.totalTimeSeconds || elapsedTime)}
                 </p>
               </div>
-              <Button variant="neon" size="lg" onClick={handleReset}>
-                <RotateCcw className="w-5 h-5 mr-2" />
-                Play Again
-              </Button>
+              {/* Show breakdown here too? */}
+              <div className="grid grid-cols-1 gap-2 max-w-md mx-auto">
+                {[1, 2, 3, 4, 5].map(lvl => (
+                  <div key={lvl} className="flex justify-between text-muted-foreground bg-secondary/20 p-2 rounded">
+                    <span>Level {lvl}</span>
+                    <span>{getLevelDuration(lvl) || '--'}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
@@ -178,11 +251,18 @@ const Game = () => {
 
             {/* Active Puzzle */}
             {selectedLevel && (
-              <LevelPuzzle
-                level={selectedLevel}
-                onComplete={handleCompleteLevel}
-                showKeyInput={showKeyInput(selectedLevel)}
-              />
+              <div>
+                <div className="text-center mb-4">
+                  <span className="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary border border-primary/50 text-sm font-display">
+                    ⏱️ Time Spent: {getLevelDuration(selectedLevel) || '0s'}
+                  </span>
+                </div>
+                <LevelPuzzle
+                  level={selectedLevel}
+                  onComplete={handleCompleteLevel}
+                  showKeyInput={showKeyInput(selectedLevel)}
+                />
+              </div>
             )}
           </div>
         )}

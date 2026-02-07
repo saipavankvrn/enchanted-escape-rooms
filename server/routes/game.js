@@ -30,6 +30,7 @@ router.get('/state', auth, async (req, res) => {
             completed_levels: user.completedLevels,
             start_time: user.startTime,
             end_time: user.endTime,
+            level_timestamps: user.levelTimestamps || {},
             total_time_seconds: user.totalTimeSeconds,
             is_completed: user.isCompleted
         });
@@ -47,6 +48,7 @@ router.post('/save', auth, async (req, res) => {
             completedLevels,
             startTime,
             endTime,
+            levelTimestamps,
             totalTimeSeconds,
             isCompleted
         } = req.body;
@@ -56,6 +58,7 @@ router.post('/save', auth, async (req, res) => {
         if (completedLevels !== undefined) updateData.completedLevels = completedLevels;
         if (startTime !== undefined) updateData.startTime = startTime;
         if (endTime !== undefined) updateData.endTime = endTime;
+        if (levelTimestamps !== undefined) updateData.levelTimestamps = levelTimestamps;
         if (totalTimeSeconds !== undefined) updateData.totalTimeSeconds = totalTimeSeconds;
         if (isCompleted !== undefined) updateData.isCompleted = isCompleted;
 

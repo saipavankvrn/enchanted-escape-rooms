@@ -42,7 +42,8 @@ router.get('/players', adminAuth, async (req, res) => {
             is_completed: p.isCompleted,
             created_at: p.createdAt,
             end_time: p.endTime,
-            start_time: p.startTime
+            start_time: p.startTime,
+            level_timestamps: p.levelTimestamps || {}
         }));
 
         res.json(mappedPlayers);
