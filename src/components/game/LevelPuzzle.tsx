@@ -39,17 +39,17 @@ const puzzles = [
   },
   {
     title: "The Enigma Vault",
-    description: "The vault door is locked by a database query. A vulnerability lies within the schema. Manipulate the input to bypass authentication.",
-    hint: "Identify the vulnerable column, then use SQL Injection on the username.",
-    action: "Unravel & Proceed",
-    secretHint: "The key is ENIGMA.",
+    description: "A mysterious data string has been recovered. It appears to be standard encoding, but standard tools fail. A sticky note with 'ALPHA' was attached to the server.",
+    hint: "Use the 'Decrypt Hint' button in the vault interface if you are stuck. It costs time.",
+    action: "Decode & Decrypt",
+    secretHint: "The key is the Flag.",
   },
   {
-    title: "The Final Escape",
-    description: "The core of the system. You must breach the firewall, decrypt the master sequence, and execute the override command.",
-    hint: "Network -> Cipher -> Terminal. Follow the flow.",
-    action: "Complete & Escape!",
-    secretHint: "Combine fragments: ES - CA - PE.",
+    title: "Level 5: The Needle in the Digital Haystack",
+    description: "We have successfully tapped the adversary's communication line, but they are using 'Security through Obscurity'. They have buried their secret flag inside a massive stream of network traffic. Download the captured packet file and perform a forensic deep dive to locate the hidden flag string.",
+    hint: "Warning: Requesting a hint will cost you 3 minutes. The flag is buried deep.",
+    action: "Deep Packet Inspection",
+    secretHint: "Today i am travelling from Chennai(20) to Delhi(21) for Cyber Catalyst 2026",
   },
 ];
 

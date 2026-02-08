@@ -47,25 +47,26 @@ const LEVEL_DATA = [
     {
         level: 4,
         title: "The Enigma Vault",
-        theme: "SQL Injection",
-        key: "ENIGMA",
+        theme: "Cryptography",
+        key: "TH3_M4SK_0F_Z0RR0",
         tasks: [
-            { name: "Schema Inspection", solution: "In 'Database Explorer', expand 'users' table. Click 'is_admin' column.", fragment: "ENIG" },
-            { name: "Auth Bypass", solution: "In 'Admin Portal', enter Username: admin' -- (Password can be anything).", fragment: "MA" }
+            { name: "Artifact Analysis", solution: "'VRvgX000c2euTGZqLqBynyH=' is Base64 encoded, but deciphering it yields garbage.", fragment: "Artifact" },
+            { name: "Clue Decoding", solution: "Sticky note 'ALPHA' suggests Vigenere Key. 'My mother use Vigenere while cooking!!!!' is the hint.", fragment: "Hint: Cooking" },
+            { name: "Decryption", solution: "Decrypt (Vigenere) 'VRvgX000c2euTGZqLqBynyH=' with key 'ALPHA' -> 'VGgzX000c2tfMGZfWjBycjA='. Then Base64 Decode -> 'Th3_M4sk_0f_Z0rr0'", fragment: "Flag" }
         ],
-        tools: ["Basic SQL Knowledge", "In-Game Database Explorer", "In-Game Login Terminal"]
+        tools: ["CyberChef", "Vigenere Cipher Decoder", "Base64 Decoder"]
     },
     {
         level: 5,
-        title: "The Final Escape",
-        theme: "Network & Crypto",
-        key: "ESCAPE",
+        title: "The Needle in the Digital Haystack",
+        theme: "Network Forensics",
+        key: "P64P_4N4L7S1S_SU55355FUL_4624A8B6",
         tasks: [
-            { name: "Firewall Bypass", solution: "In 'Network Layer', click Node 3 (192.168.1.15 : Port 80 HTTP).", fragment: "ES" },
-            { name: "Decryption", solution: "Decrypt 'H V F D S H' (Shift -3) -> Enter 'ESCAPE' in Cipher panel.", fragment: "CA" },
-            { name: "System Override", solution: "In Terminal, type: sudo system_override", fragment: "PE" }
+            { name: "Traffic Analysis", solution: "Download 'traffic_dump.pcap'. Open in Wireshark.", fragment: "PCAP" },
+            { name: "Protocol Filtering", solution: "Hint 'Chennai(20) to Delhi(21)' refers to FTP Ports 20/21. Filter for 'ftp' or 'tcp.port == 21'.", fragment: "FTP" },
+            { name: "Flag Extraction", solution: "Follow TCP Stream on FTP packets. Flag is in the data stream: 'P64P_4N4L7S1S_SU55355FUL_4624A8B6'", fragment: "Flag" }
         ],
-        tools: ["Network Protocol Knowledge", "Cryptography Basics (Caesar Cipher)", "In-Game Master Terminal"]
+        tools: ["Wireshark", "Network Miner", "Packet Analysis"]
     }
 ];
 
@@ -101,7 +102,7 @@ export const GameMasterGuide = () => {
                                 </TableCell>
                                 <TableCell className="align-top">
                                     <div className="flex items-center gap-2">
-                                        <code className="bg-slate-800 px-2 py-1 rounded text-green-400 font-mono text-sm">
+                                        <code className="bg-slate-800 px-2 py-1 rounded text-green-400 font-mono text-xs break-all max-w-[200px] inline-block">
                                             {level.key}
                                         </code>
                                         <Button
@@ -141,6 +142,34 @@ export const GameMasterGuide = () => {
                         ))}
                     </TableBody>
                 </Table>
+            </div>
+
+            <div className="space-y-4 pt-8 border-t border-white/10">
+                <h3 className="text-xl font-bold font-display text-primary">Admin Capabilities</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="bg-black/40 border border-primary/20 rounded-lg p-4">
+                        <div className="font-bold text-white mb-2">Team Management</div>
+                        <ul className="text-sm text-slate-400 space-y-1 list-disc list-inside">
+                            <li><span className="text-primary">Add Team:</span> Create new playing teams instantly.</li>
+                            <li><span className="text-red-400">Delete Team:</span> Permanently remove team data.</li>
+                        </ul>
+                    </div>
+                    <div className="bg-black/40 border border-primary/20 rounded-lg p-4">
+                        <div className="font-bold text-white mb-2">Time Control</div>
+                        <ul className="text-sm text-slate-400 space-y-1 list-disc list-inside">
+                            <li><span className="text-yellow-400">Reset Timer:</span> Restart 50m countdown for a team.</li>
+                            <li><span className="text-green-400">Add Time:</span> Grant +5 mins to struggling teams.</li>
+                            <li><span className="text-red-400">Deduct Time:</span> Penalize -5 mins for rule violations.</li>
+                        </ul>
+                    </div>
+                    <div className="bg-black/40 border border-primary/20 rounded-lg p-4">
+                        <div className="font-bold text-white mb-2">Level Control</div>
+                        <ul className="text-sm text-slate-400 space-y-1 list-disc list-inside">
+                            <li><span className="text-primary">Reset Level:</span> Send team back to specific level start.</li>
+                            <li><span className="text-blue-400">Unlock All:</span> (Dev Mode) Bypass progression checks.</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     );

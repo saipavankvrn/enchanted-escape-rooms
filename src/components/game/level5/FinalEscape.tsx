@@ -1,217 +1,126 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Terminal, Shield, Wifi, Globe, Lock, Code, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Download, AlertTriangle, Network, FileDown } from 'lucide-react';
 import { useGameState } from '@/hooks/useGameState';
 import { toast } from 'sonner';
 
 const FinalEscape = () => {
-    const { gameState, completeSubTask } = useGameState();
+    const { applyPenalty } = useGameState();
+    const [hintRevealed, setHintRevealed] = useState(false);
 
-    // Level 5: The Master Terminal
-    // Requires applying knowledge from Levels 1-4.
-    // Task 1: Firewall Deactivation (Network Analysis)
-    // Task 2: Decrypt Master Key (Cipher)
-    // Task 3: Execute Override (Command Line)
-
-    const collectedBytes = gameState.subTasksCompleted[5] || [];
-    const hasByte1 = collectedBytes.includes('byte_1'); // Firewall
-    const hasByte2 = collectedBytes.includes('byte_2'); // Decrypt
-    const hasByte3 = collectedBytes.includes('byte_3'); // Override
-
-    const [activePanel, setActivePanel] = useState<'network' | 'cipher' | 'terminal'>('network');
-    const [timeLeft, setTimeLeft] = useState(300); // 5 min local countdown for pressure
-
-    // --- Task 1: Firewall (Network) ---
-    // A grid of nodes. Find the weak one (Port 80/HTTP vs 443/HTTPS).
-    const NODES = [
-        { id: 1, ip: "192.168.1.10", port: "443", protocol: "HTTPS", status: "Secure" },
-        { id: 2, ip: "192.168.1.12", port: "22", protocol: "SSH", status: "Locked" },
-        { id: 3, ip: "192.168.1.15", port: "80", protocol: "HTTP", status: "Vulnerable" }, // Target
-        { id: 4, ip: "192.168.1.20", port: "443", protocol: "HTTPS", status: "Secure" },
-    ];
-
-    const handleNodeHack = (node: typeof NODES[0]) => {
-        if (node.status === "Vulnerable") {
-            if (!hasByte1) {
-                toast.success("FIREWALL BYPASSED: Insecure Protocol Exploited.", { description: "Shard 1/3: 'ES'" });
-                completeSubTask(5, 'byte_1');
-                setActivePanel('cipher');
-            }
-        } else {
-            toast.error("ACCESS DENIED: Node is secure. Find the weak link.");
-            // Penalty: Reset terminal or subtract time?
-        }
+    const handleDownload = () => {
+        const link = document.createElement('a');
+        link.href = '/assets/level5/traffic_dump.pcap';
+        link.download = 'traffic_dump.pcap';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Download Initiated: traffic_dump.pcap");
     };
 
-    // --- Task 2: Decrypt (Cipher) ---
-    // ROT13 or similar simple cipher.
-    // "U3110_W0RLD" -> "HELLO_WORLD"? No let's do hex or binary.
-    // Cipher: "43 41 50 45" -> "CAPE". 
-    // Key is "ESCAPE". So "45 53 43 41 50 45".
-    // Let's make it a mix of patterns.
-    // Pattern: "The key to escape is hidden in the shadows."
-    // Cipher Text: "E_____ (Level 4 Key) + (Level 2 Key)" ? No too complex.
-    // Let's do a shift cipher.
-    // "H V F D S H" (Shift -3) -> "E S C A P E".
-
-    const [cipherInput, setCipherInput] = useState("");
-
-    const handleDecrypt = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (cipherInput.toUpperCase() === "ESCAPE") {
-            if (!hasByte2) {
-                toast.success("KEY DECRYPTED: Master Sequence Revealed.", { description: "Shard 2/3: 'CA'" });
-                completeSubTask(5, 'byte_2');
-                setActivePanel('terminal');
-            }
-        } else {
-            toast.error("DECRYPTION FAILED: Invalid Key.");
-        }
-    };
-
-    // --- Task 3: Terminal Override ---
-    // Type commands to execute the escape.
-    // 1. sudo mount /dev/master
-    // 2. run exploit.exe
-    // Let's simplify: Just type "sudo execute escape" or similar.
-    // Hint: "Mount the drive, then execute the final command."
-
-    const [terminalInput, setTerminalInput] = useState("");
-    const [logs, setLogs] = useState<string[]>([
-        "> SYSTEM FAILURE IMMINENT",
-        "> CONNECTING TO MAINFRAME...",
-        "> AWAITING OVERRIDE COMMAND..."
-    ]);
-
-    const handleTerminalCommand = (e: React.FormEvent) => {
-        e.preventDefault();
-        const cmd = terminalInput.trim().toLowerCase();
-
-        setLogs(prev => [...prev, `> ${terminalInput}`]);
-        setTerminalInput("");
-
-        if (cmd === "help") {
-            setLogs(prev => [...prev, "AVAILABLE COMMANDS:", "- connect [ip]", "- decrypt [hash]", "- sudo system_override"]);
-        } else if (cmd === "sudo system_override") {
-            if (!hasByte1 || !hasByte2) {
-                setLogs(prev => [...prev, "ERROR: Prerequisites not met. Bypass firewall and decrypt key first."]);
-                toast.error("System Locked.");
-                return;
-            }
-            if (!hasByte3) {
-                setLogs(prev => [...prev, "OVERRIDE INITIATED...", "SUCCESS. SYSTEM SHUTDOWN.", "DELETING TRACES...", "REMOVING MALWARE PAYLOADS...", "CLEANING LOGS...", "SYSTEM RESTORED."]);
-                toast.success("SYSTEM OVERRIDE COMPLETE", { description: "Shard 3/3: 'PE'" });
-                completeSubTask(5, 'byte_3');
-            }
-        } else {
-            setLogs(prev => [...prev, "ERROR: Command not recognized. Type 'help'."]);
+    const handleRequestHint = () => {
+        if (confirm("WARNING: Requesting high-level intelligence will cost 3 MINUTES of operation time. Proceed?")) {
+            applyPenalty(180); // 3 minutes
+            setHintRevealed(true);
+            toast.warning("Time Penalty Applied: -3 Minutes");
         }
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto p-4 flex flex-col gap-6">
-            {/* Master HUD */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div className={`p-4 border rounded bg-black/60 flex flex-col items-center justify-center ${activePanel === 'network' ? 'border-primary shadow-[0_0_15px_rgba(139,92,246,0.5)]' : 'border-white/10 opacity-50'}`}>
-                    <Wifi className="w-6 h-6 mb-2 text-primary" />
-                    <span className="text-xs uppercase tracking-widest">Network Layer</span>
-                    <span className={`font-bold ${hasByte1 ? 'text-success' : 'text-slate-500'}`}>{hasByte1 ? "BYPASSED [ES]" : "LOCKED"}</span>
+        <div className="w-full max-w-4xl mx-auto p-4 flex flex-col gap-8 animate-in fade-in duration-700">
+            {/* Mission Header */}
+            <div className="text-center space-y-4">
+                <div className="inline-block p-3 rounded-full bg-blue-900/30 border border-blue-500/50 mb-2">
+                    <Network className="w-8 h-8 text-blue-400 animate-pulse" />
                 </div>
-                <div className={`p-4 border rounded bg-black/60 flex flex-col items-center justify-center ${activePanel === 'cipher' ? 'border-primary shadow-[0_0_15px_rgba(139,92,246,0.5)]' : 'border-white/10 opacity-50'}`}>
-                    <Code className="w-6 h-6 mb-2 text-primary" />
-                    <span className="text-xs uppercase tracking-widest">Encryption Layer</span>
-                    <span className={`font-bold ${hasByte2 ? 'text-success' : 'text-slate-500'}`}>{hasByte2 ? "DECRYPTED [CA]" : "LOCKED"}</span>
-                </div>
-                <div className={`p-4 border rounded bg-black/60 flex flex-col items-center justify-center ${activePanel === 'terminal' ? 'border-primary shadow-[0_0_15px_rgba(139,92,246,0.5)]' : 'border-white/10 opacity-50'}`}>
-                    <Terminal className="w-6 h-6 mb-2 text-primary" />
-                    <span className="text-xs uppercase tracking-widest">Kernel Layer</span>
-                    <span className={`font-bold ${hasByte3 ? 'text-success' : 'text-slate-500'}`}>{hasByte3 ? "OVERRIDDEN [PE]" : "LOCKED"}</span>
-                </div>
+                <h2 className="text-3xl font-display font-bold text-white tracking-widest uppercase text-shadow-blue">
+                    Operation: Needle in the Haystack
+                </h2>
+                <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+                    Adversary communication intercepted. Analysis required.
+                </p>
             </div>
 
-            <div className="bg-slate-900 border border-primary/30 rounded-xl p-8 min-h-[400px] relative overflow-hidden">
-                {/* Background Grid Animation */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.05)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
+            {/* Main Interface */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                {/* LAYER 1: NETWORK */}
-                {activePanel === 'network' && (
-                    <div className="relative z-10 flex flex-col h-full animate-in fade-in zoom-in duration-500">
-                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                            <Shield className="w-5 h-5 text-red-500" /> Perimeter Defense System
+                {/* Evidence Card */}
+                <div className="bg-slate-900/80 border border-blue-500/30 rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-6 shadow-[0_0_30px_rgba(59,130,246,0.1)] relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors duration-500" />
+
+                    <div className="relative z-10 w-full">
+                        <h3 className="text-xl font-bold text-blue-400 mb-2 uppercase tracking-wider">
+                            Evidence Locker
                         </h3>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            {NODES.map(node => (
-                                <button
-                                    key={node.id}
-                                    onClick={() => handleNodeHack(node)}
-                                    className={`p-4 rounded border flex flex-col gap-2 transition-all hover:scale-105 ${node.status === 'Vulnerable' ? 'border-yellow-500/50 hover:bg-yellow-500/10' : 'border-green-500/30 hover:bg-green-500/10'}`}
-                                >
-                                    <Globe className="w-8 h-8 text-slate-400" />
-                                    <div className="text-xs font-mono text-slate-500">{node.ip}</div>
-                                    <div className="font-bold text-white">{node.protocol} :{node.port}</div>
-                                    <div className={`text-xs uppercase font-bold ${node.status === 'Vulnerable' ? 'text-yellow-500' : 'text-green-500'}`}>
-                                        {/* Hide status text in difficulty increase? No, keep logic simple. */}
-                                        {node.status === 'Vulnerable' ? 'Scanning...' : 'Encrypted'}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                        <p className="mt-8 text-sm text-slate-400 font-mono">
-                            <AlertTriangle className="w-4 h-4 inline mr-2 text-yellow-500" />
-                            HINT: Secure protocols (HTTPS, SSH) are hardened. Look for unencrypted traffic.
+                        <p className="text-sm text-slate-500 mb-6">
+                            Contains raw packet capture (PCAP) from the suspect node.
                         </p>
-                    </div>
-                )}
 
-                {/* LAYER 2: CIPHER */}
-                {activePanel === 'cipher' && (
-                    <div className="relative z-10 flex flex-col items-center justify-center h-full animate-in fade-in slide-in-from-right duration-500">
-                        <h3 className="text-xl font-bold text-white mb-8">Decryption Module</h3>
-
-                        <div className="bg-black/50 p-6 rounded border border-white/10 mb-8 text-center">
-                            <p className="text-xs text-slate-500 uppercase tracking-[0.2em] mb-2">Intercepted Hash</p>
-                            <div className="text-4xl font-mono font-bold text-primary tracking-widest glitch-text">
-                                H V F D S H
+                        <div className="bg-black/50 border border-slate-700 rounded-lg p-4 mb-6 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <FileDown className="w-8 h-8 text-slate-400" />
+                                <div className="text-left">
+                                    <div className="text-white font-mono font-bold">traffic_dump.pcap</div>
+                                    <div className="text-xs text-slate-500">104 KB • TCP/UDP Data</div>
+                                </div>
                             </div>
-                            <p className="mt-4 text-xs text-slate-400">Algorithm: Caesar Cipher (Shift -3)</p>
                         </div>
 
-                        <form onSubmit={handleDecrypt} className="flex gap-4 w-full max-w-md">
-                            <input
-                                type="text"
-                                className="flex-1 bg-slate-800 border border-slate-600 rounded px-4 py-2 text-white font-mono uppercase focus:border-primary focus:outline-none"
-                                placeholder="ENTER DECRYPTED KEY"
-                                value={cipherInput}
-                                onChange={e => setCipherInput(e.target.value)}
-                            />
-                            <Button type="submit" variant="neon">Unlock</Button>
-                        </form>
+                        <Button
+                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-6 text-lg shadow-lg shadow-blue-900/50"
+                            onClick={handleDownload}
+                        >
+                            <Download className="w-6 h-6 mr-2" />
+                            DOWNLOAD PACKET DUMP
+                        </Button>
                     </div>
-                )}
+                </div>
 
-                {/* LAYER 3: TERMINAL */}
-                {activePanel === 'terminal' && (
-                    <div className="relative z-10 flex flex-col h-full animate-in fade-in slide-in-from-bottom duration-500">
-                        <div className="flex-1 bg-black p-4 font-mono text-sm text-green-500/90 rounded border border-slate-700 overflow-hidden flex flex-col shadow-inner">
-                            <div className="flex-1 overflow-y-auto space-y-1">
-                                {logs.map((log, i) => (
-                                    <div key={i}>{log}</div>
-                                ))}
-                            </div>
-                            <form onSubmit={handleTerminalCommand} className="mt-2 flex gap-2 border-t border-white/10 pt-2">
-                                <span className="text-primary">{">"}</span>
-                                <input
-                                    autoFocus
-                                    type="text"
-                                    className="flex-1 bg-transparent border-none outline-none text-white focus:ring-0"
-                                    value={terminalInput}
-                                    onChange={e => setTerminalInput(e.target.value)}
-                                    placeholder="Type 'help' for commands..."
-                                />
-                            </form>
+                {/* Intelligence Card */}
+                <div className="bg-slate-900/80 border border-yellow-500/30 rounded-xl p-6 flex flex-col items-center text-center space-y-6 shadow-[0_0_30px_rgba(234,179,8,0.1)] relative overflow-hidden">
+                    <div className="absolute inset-0 bg-yellow-500/5" />
+
+                    <div className="relative z-10 w-full h-full flex flex-col">
+                        <h3 className="text-xl font-bold text-yellow-500 mb-2 uppercase tracking-wider flex items-center justify-center gap-2">
+                            <ShieldCheck className="w-5 h-5" /> Intelligence Support
+                        </h3>
+                        <p className="text-sm text-slate-500 mb-6">
+                            HQ can provide a geolocated trace hint, but it will consume mission time.
+                        </p>
+
+                        <div className="flex-1 flex flex-col items-center justify-center">
+                            {!hintRevealed ? (
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-red-950/30 border border-red-500/50 rounded text-red-400 text-xs font-mono">
+                                        PENALTY WARNING: -3:00 MINUTES
+                                    </div>
+                                    <Button
+                                        variant="outline"
+                                        className="border-yellow-600 text-yellow-500 hover:bg-yellow-900/50 hover:border-yellow-400 hover:text-yellow-300 w-full"
+                                        onClick={handleRequestHint}
+                                    >
+                                        <AlertTriangle className="w-4 h-4 mr-2" />
+                                        REQUEST TARGET INTEL
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="w-full bg-black/60 border border-yellow-500/50 rounded-lg p-6 animate-in zoom-in duration-300">
+                                    <div className="text-xs text-yellow-600 uppercase mb-2 font-bold tracking-widest">
+                                        Decrypted Transmission
+                                    </div>
+                                    <p className="text-lg text-white font-handwriting italic leading-relaxed">
+                                        "Today i am travelling from Chennai(20) to Delhi(21) for Cyber Catalyst 2026"
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
-                )}
+                </div>
+
+            </div>
+
+            <div className="text-center text-xs text-slate-600 font-mono mt-8">
+                SECURE CHANNEL ESTABLISHED // MONITORING ACTIVE
             </div>
         </div>
     );

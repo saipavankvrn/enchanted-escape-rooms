@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useAuth } from './useAuth';
+import { toast } from 'sonner';
 
 interface GameState {
   currentLevel: number;
@@ -20,14 +21,15 @@ interface GameContextType {
   resetGame: () => void;
   elapsedTime: number;
   isPlaying: boolean;
+  applyPenalty: (seconds: number) => Promise<void>;
 }
 
 const levelSecrets: Record<number, string> = {
   1: 'LEVEL-1-COMPLETE',
   2: 'SHADOW',
   3: 'DICT_ATTACK_MASTER',
-  4: 'ENIGMA',
-  5: 'ESCAPE',
+  4: 'TH3_M4SK_0F_Z0RR0',
+  5: 'P64P_4N4L7S1S_SU55355FUL_4624A8B6',
   // Note: Level 1 key is revealed in PasswordRoom
 };
 
@@ -138,6 +140,25 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setElapsedTime(0);
     saveGameState({ startTime: now, currentLevel: 1 });
   }, [saveGameState]);
+
+  const applyPenalty = useCallback(async (seconds: number) => {
+    if (!gameState.startTime) return;
+
+    // Moving start time BACK makes elapsed time larger, thus reducing remaining time.
+    const newStartTime = new Date(gameState.startTime.getTime() - seconds * 1000);
+
+    setGameState(prev => ({
+      ...prev,
+      startTime: newStartTime
+    }));
+
+    // Update elapsed time immediately for UI responsiveness
+    const now = new Date();
+    setElapsedTime(Math.floor((now.getTime() - newStartTime.getTime()) / 1000));
+
+    await saveGameState({ startTime: newStartTime });
+    toast.error(`Time Penalty Applied: -${Math.floor(seconds / 60)}m`);
+  }, [gameState.startTime, saveGameState]);
 
   const completeSubTask = useCallback(async (level: number, taskId: string) => {
     const currentTasks = gameState.subTasksCompleted[level] || [];
@@ -298,7 +319,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       completeSubTask,
       resetGame,
       elapsedTime,
-      isPlaying
+      isPlaying,
+      applyPenalty
     }}>
       {children}
     </GameContext.Provider>

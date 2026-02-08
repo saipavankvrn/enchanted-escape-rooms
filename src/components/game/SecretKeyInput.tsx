@@ -28,8 +28,8 @@ const SecretKeyInput = ({ onSubmit, isLoading }: SecretKeyInputProps) => {
           placeholder="Enter the secret key..."
           value={key}
           onChange={(e) => setKey(e.target.value.toUpperCase())}
-          className="pl-10 font-display tracking-widest uppercase"
-          maxLength={20}
+          className="pl-10 font-display tracking-wider uppercase"
+          maxLength={100}
         />
       </div>
       <Button type="submit" variant="neon" disabled={!key.trim() || isLoading}>
