@@ -17,7 +17,7 @@ const LEVEL_DATA = [
         theme: "Advanced Phishing Detection",
         key: "LEVEL-1-COMPLETE",
         tasks: [
-            { name: "Threat Identification", solution: "Search 60 emails. Locate 'Vulnerability Assessment' / 'Pen-Test' email (Hidden in middle/bottom).", fragment: "Threat ID" },
+            { name: "Threat Identification", solution: "Search 60 emails. Locate 'Vulnerability Assessment' / 'Pen-Test' email (Index ~38).", fragment: "Threat ID" },
             { name: "Payload Analysis", solution: "Find attachment with double extension (.pdf.exe). Click 'ANALYZE THREAT'.", fragment: "LEVEL-1-COMPLETE" }
         ],
         tools: ["Secure Inbox (60 Emails)", "Threat Analyzer Module"]
@@ -39,8 +39,8 @@ const LEVEL_DATA = [
         theme: "Dictionary Attack (Hydra)",
         key: "DICT_ATTACK_MASTER",
         tasks: [
-            { name: "Scraping", solution: "cewl https://omega-corp.internal -w wordlist.txt", fragment: "DICT_" },
-            { name: "Brute Force", solution: "hydra -l admin -P wordlist.txt 10.10.10.55", fragment: "ATTACK_MASTER" }
+            { name: "Scraping", solution: "Run: cewl https://omega-corp.internal -w wordlist.txt", fragment: "DICT_" },
+            { name: "Brute Force", solution: "Run: hydra -l admin -P wordlist.txt 10.10.10.55", fragment: "ATTACK_MASTER" }
         ],
         tools: ["Terminal", "cewl", "hydra"]
     },
@@ -50,8 +50,8 @@ const LEVEL_DATA = [
         theme: "SQL Injection",
         key: "ENIGMA",
         tasks: [
-            { name: "Schema", solution: "Find 'is_admin' column in Users table", fragment: "ENIG" },
-            { name: "Auth Bypass", solution: "Login with user: admin' --", fragment: "MA" }
+            { name: "Schema Inspection", solution: "In 'Database Explorer', expand 'users' table. Click 'is_admin' column.", fragment: "ENIG" },
+            { name: "Auth Bypass", solution: "In 'Admin Portal', enter Username: admin' -- (Password can be anything).", fragment: "MA" }
         ],
         tools: ["Basic SQL Knowledge", "In-Game Database Explorer", "In-Game Login Terminal"]
     },
@@ -61,9 +61,9 @@ const LEVEL_DATA = [
         theme: "Network & Crypto",
         key: "ESCAPE",
         tasks: [
-            { name: "Firewall", solution: "Exploit Port 80 (HTTP) node", fragment: "ES" },
-            { name: "Decryption", solution: "Shift -3 (Caesar) -> Enter 'ESCAPE'", fragment: "CA" },
-            { name: "Override", solution: "Terminal -> help -> sudo system_override", fragment: "PE" }
+            { name: "Firewall Bypass", solution: "In 'Network Layer', click Node 3 (192.168.1.15 : Port 80 HTTP).", fragment: "ES" },
+            { name: "Decryption", solution: "Decrypt 'H V F D S H' (Shift -3) -> Enter 'ESCAPE' in Cipher panel.", fragment: "CA" },
+            { name: "System Override", solution: "In Terminal, type: sudo system_override", fragment: "PE" }
         ],
         tools: ["Network Protocol Knowledge", "Cryptography Basics (Caesar Cipher)", "In-Game Master Terminal"]
     }
