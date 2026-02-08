@@ -25,7 +25,7 @@ interface GameContextType {
 const levelSecrets: Record<number, string> = {
   1: 'LEVEL-1-COMPLETE',
   2: 'SHADOW',
-  3: 'CIPHER',
+  3: 'DICT_ATTACK_MASTER',
   4: 'ENIGMA',
   5: 'ESCAPE',
   // Note: Level 1 key is revealed in PasswordRoom

@@ -17,25 +17,25 @@ interface LevelPuzzleProps {
 
 const puzzles = [
   {
-    title: "The Awakening",
-    description: "You find yourself in a mysterious chamber. A glowing orb floats before you, pulsing with energy. To proceed, you must simply accept your fate and begin the journey.",
-    hint: "Click the button to start your escape.",
-    action: "Begin Journey",
-    secretHint: null,
+    title: "The Whispering Porch",
+    description: "You have breached the secure perimeter. A ransomware payload is hidden within the corporate inbox. You must identify, scan, and neutralize the threat to generate the access key.",
+    hint: "Pay attention to file extensions. Not everything is what it seems.",
+    action: "Begin Analysis",
+    secretHint: "The scanner will reveal the truth.",
   },
   {
     title: "The Hall of Mirrors",
-    description: "Identity is fluid here. Reflections lie. To find the key, you must discern truth from fabrication across three realms: Time, Space, and Voice.",
-    hint: "Check the tabs for different investigations. Look for inconsistencies.",
-    action: "Solve & Proceed",
-    secretHint: "Collect the 3 shards to form the key: SH - AD - OW",
+    description: "Airports are global hubs where cultures intersect. A fugitive signal was intercepted from an undisclosed terminal. Analyze the footage to pinpoint the exact location and time.",
+    hint: "Pay attention to flight boards, architectural landmarks, or distinct cultural markers. The file name is 'level2_osint.mp4'.",
+    action: "Begin Analysis",
+    secretHint: "Every reflection tells a story. Look for the 'Chandigarh' connection.",
   },
   {
-    title: "The Cursed Library",
-    description: "Ancient texts and forbidden scrolls surround you. The knowledge is protected by layers of complexity. Only those who calculate strength can unlock the voltage gate.",
-    hint: "Find the strong passwords. Then order them by length.",
-    action: "Decode & Proceed",
-    secretHint: "Combine the fragments: CIP - HER",
+    title: "Targeted Penetration",
+    description: "The target is Omega Corp. You must gain SSH access to their admin server (10.10.10.55). Standard wordlists have failed, so you must generate a custom dictionary from their website content.",
+    hint: "Use 'cewl' to scrape the site for words, then 'hydra' to brute force the login.",
+    action: "Launch Terminal",
+    secretHint: "The password is hidden in plain sight on the 'About Us' page.",
   },
   {
     title: "The Enigma Vault",
@@ -64,13 +64,14 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
   };
 
   const handleAction = () => {
+    // Legacy handleAction not strictly needed for Level 1 anymore as it's interactive
     if (level === 1) {
-      onComplete();
+      // onComplete(); 
     }
   };
 
   return (
-    <div className="glass-panel rounded-2xl p-8 max-w-2xl mx-auto">
+    <div className="glass-panel rounded-2xl p-8 w-full max-w-7xl mx-auto">
       <div className="text-center mb-8">
         <span className="text-xs font-display uppercase tracking-wider text-primary">
           Level {level} of 5
@@ -111,7 +112,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
             {showKeyInput && (
               <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <p className="text-center text-sm text-muted-foreground mb-4">
-                  SYSTEM KEY FRAGMENTS RECOVERED. ASSEMBLE TO PROCEED.
+                  THREAT ELIMINATED. SYSTEM KEY GENERATED.
                 </p>
                 <SecretKeyInput onSubmit={handleKeySubmit} />
               </div>
@@ -123,7 +124,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
             {showKeyInput && (
               <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <p className="text-center text-sm text-muted-foreground mb-4">
-                  MIRROR SHARDS ALIGNED. KEY SYNTHESIS READY.
+                  LOCATION VERIFIED. SYSTEM KEY GENERATED.
                 </p>
                 <SecretKeyInput onSubmit={handleKeySubmit} />
               </div>
@@ -135,7 +136,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
             {showKeyInput && (
               <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <p className="text-center text-sm text-muted-foreground mb-4">
-                  VOLTAGE GATE OPEN. ENTER ACCESS CODE.
+                  SSH SESSION ESTABLISHED. FLAG CAPTURED.
                 </p>
                 <SecretKeyInput onSubmit={handleKeySubmit} />
               </div>

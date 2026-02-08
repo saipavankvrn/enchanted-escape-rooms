@@ -10,24 +10,24 @@ interface LevelCardProps {
 }
 
 const levelNames = [
-  'The Awakening',
-  'Shadow Realm',
-  'Cipher Chamber',
-  'Enigma Vault',
-  'Final Escape',
+  'The Whispering Porch',
+  'The Hall of Mirrors',
+  'The Cursed Library',
+  'The Enigma Vault',
+  'The Final Escape',
 ];
 
 const levelDescriptions = [
-  'Begin your journey into the unknown...',
-  'Navigate through the shadows to find the light.',
-  'Decode the ancient symbols to proceed.',
-  'Solve the ultimate puzzle of the vault.',
-  'Your final challenge awaits...',
+  'Identify and neutralize the malware threat.',
+  'Find the truth amidst the reflections.',
+  'Unlock the gate with the strongest passwords.',
+  'Bypass the vault security with SQL injection.',
+  'Execute the final override command.',
 ];
 
 const LevelCard = ({ level, isLocked, isCompleted, isCurrent, onClick }: LevelCardProps) => {
   const levelIndex = level - 1;
-  
+
   return (
     <div
       onClick={!isLocked ? onClick : undefined}
@@ -52,7 +52,7 @@ const LevelCard = ({ level, isLocked, isCompleted, isCurrent, onClick }: LevelCa
             {levelNames[levelIndex]}
           </h3>
         </div>
-        
+
         <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-border">
           {isLocked && <Lock className="w-5 h-5 text-muted-foreground" />}
           {isCompleted && <CheckCircle className="w-5 h-5 text-success" />}
@@ -61,11 +61,11 @@ const LevelCard = ({ level, isLocked, isCompleted, isCurrent, onClick }: LevelCa
           )}
         </div>
       </div>
-      
+
       <p className="mt-4 text-sm text-muted-foreground">
         {levelDescriptions[levelIndex]}
       </p>
-      
+
       <div className="mt-4 flex items-center gap-2">
         {Array.from({ length: 5 }).map((_, i) => (
           <div

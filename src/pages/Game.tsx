@@ -16,6 +16,7 @@ const Game = () => {
   const { user, signOut, loading, isAdmin } = useAuth();
   const { gameState, startGame, completeLevel, elapsedTime, isPlaying } = useGameState();
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [isInMission, setIsInMission] = useState(false);
   const navigate = useNavigate();
 
   const remainingTime = Math.max(0, TOTAL_TIME - elapsedTime);
@@ -39,12 +40,23 @@ const Game = () => {
     if (!gameState.completedLevels.includes(level - 1) && level !== 1 && level !== gameState.currentLevel) {
       return;
     }
+
     setSelectedLevel(level);
+
+    // Only enter mission mode if it's the current incomplete level
+    if (level === gameState.currentLevel && !gameState.isCompleted) {
+      if (level === 1 && !isPlaying) {
+        startGame();
+      }
+      setIsInMission(true);
+    }
   };
 
   const handleCompleteLevel = async (key?: string) => {
     if (!selectedLevel || isDefeated) return;
 
+    // Level 1 start game logic is moved to handleLevelClick for immediate feedback, 
+    // but we check here just in case.
     if (selectedLevel === 1 && !isPlaying) {
       startGame();
     }
@@ -52,6 +64,7 @@ const Game = () => {
     const success = await completeLevel(selectedLevel, key || '');
 
     if (success) {
+      setIsInMission(false); // Return to dashboard on success
       if (selectedLevel === 5) {
         toast.success('🎉 Congratulations! You escaped!', {
           description: `Total time: ${formatTime(elapsedTime)}`,
@@ -81,17 +94,6 @@ const Game = () => {
     return `${s}s`;
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen escape-gradient flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   const isLevelLocked = (level: number) => {
     if (level === 1) return false;
     return !gameState.completedLevels.includes(level - 1);
@@ -102,6 +104,52 @@ const Game = () => {
     if (level === 1) return true;
     return gameState.completedLevels.includes(level - 1);
   };
+
+  const getLevelDuration = (level: number) => {
+    if (!gameState.startTime) return null;
+
+    let start = gameState.startTime;
+    if (level > 1) {
+      const prevTimestamp = gameState.levelTimestamps[level - 1];
+      if (!prevTimestamp) return null; // Previous level not finished yet? Should be impossible if unlocked.
+      start = new Date(prevTimestamp);
+    }
+
+    let end = new Date(); // Default to now if playing
+    const levelTimestamp = gameState.levelTimestamps[level];
+
+    // If level is completed, use its timestamp
+    if (gameState.completedLevels.includes(level)) {
+      if (levelTimestamp) {
+        end = new Date(levelTimestamp);
+      }
+      // If completed but no timestamp (legacy data), maybe use next level's start? 
+      // Or just fail gracefully.
+    } else if (gameState.currentLevel === level && isPlaying) {
+      // If current level, use now.
+      end = new Date();
+    } else if (gameState.isCompleted && level === 5) {
+      // If game completed and checking level 5
+      if (gameState.endTime) end = gameState.endTime;
+    } else {
+      // Level locked or not started
+      return null;
+    }
+
+    const durationSeconds = Math.max(0, Math.floor((end.getTime() - start.getTime()) / 1000));
+    return formatTime(durationSeconds);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen escape-gradient flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isDefeated) {
     return (
@@ -139,50 +187,21 @@ const Game = () => {
     );
   }
 
-  const getLevelDuration = (level: number) => {
-    if (!gameState.startTime) return null;
-
-    let start = gameState.startTime;
-    if (level > 1) {
-      const prevTimestamp = gameState.levelTimestamps[level - 1];
-      if (!prevTimestamp) return null; // Previous level not finished yet? Should be impossible if unlocked.
-      start = new Date(prevTimestamp);
-    }
-
-    let end = new Date(); // Default to now if playing
-    const levelTimestamp = gameState.levelTimestamps[level];
-
-    // If level is completed, use its timestamp
-    if (gameState.completedLevels.includes(level)) {
-      if (levelTimestamp) {
-        end = new Date(levelTimestamp);
-      }
-      // If completed but no timestamp (legacy data), maybe use next level's start? 
-      // Or just fail gracefully.
-    } else if (gameState.currentLevel === level && isPlaying) {
-      // If current level, use now.
-      end = new Date();
-    } else if (gameState.isCompleted && level === 5) {
-      // If game completed and checking level 5
-      if (gameState.endTime) end = gameState.endTime;
-    } else {
-      // Level locked or not started
-      return null;
-    }
-
-    const durationSeconds = Math.max(0, Math.floor((end.getTime() - start.getTime()) / 1000));
-    return formatTime(durationSeconds);
-  };
-
   return (
     <div className="min-h-screen escape-gradient">
-      {/* Header */}
+      {/* Header - Always visible for Timer access */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-border/50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-display font-bold neon-text">ESCAPE ROOM</h1>
 
           <div className="flex items-center gap-4">
             <Timer seconds={remainingTime} isRunning={isPlaying && !isDefeated} />
+
+            {isInMission && (
+              <Button variant="ghost" size="sm" onClick={() => setIsInMission(false)}>
+                Back to HQ
+              </Button>
+            )}
 
             {isAdmin && (
               <Button variant="neonPurple" size="sm" onClick={() => navigate('/admin')}>
@@ -199,8 +218,9 @@ const Game = () => {
       </header>
 
       {/* Main Content */}
-      <main className="pt-20 pb-8">
+      <main className="pt-20 pb-8 min-h-screen flex flex-col">
         {gameState.isCompleted ? (
+          // ... (Success Screen unchanged)
           <div className="container mx-auto px-4 py-12">
             <div className="max-w-2xl mx-auto text-center">
               <div className="mb-8">
@@ -218,7 +238,6 @@ const Game = () => {
                   {formatTime(gameState.totalTimeSeconds || elapsedTime)}
                 </p>
               </div>
-              {/* Show breakdown here too? */}
               <div className="grid grid-cols-1 gap-2 max-w-md mx-auto">
                 {[1, 2, 3, 4, 5].map(lvl => (
                   <div key={lvl} className="flex justify-between text-muted-foreground bg-secondary/20 p-2 rounded">
@@ -229,11 +248,32 @@ const Game = () => {
               </div>
             </div>
           </div>
+        ) : isInMission && selectedLevel ? (
+          // FULL SCREEN MISSION MODE
+          <div className="flex-1 container mx-auto px-4 flex flex-col">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-display font-bold text-white mb-2">Level {selectedLevel}</h2>
+              <span className="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary border border-primary/50 text-sm font-display">
+                ⏱️ Time: {getLevelDuration(selectedLevel) || '0s'}
+              </span>
+            </div>
+            <div className="flex-1">
+              <LevelPuzzle
+                level={selectedLevel}
+                onComplete={handleCompleteLevel}
+                showKeyInput={showKeyInput(selectedLevel)}
+              />
+            </div>
+          </div>
         ) : (
+          // DASHBOARD MODE
           <div className="container mx-auto px-4">
             {/* 3D Room View */}
-            <div className="h-[300px] md:h-[400px] mb-8 rounded-2xl overflow-hidden neon-box">
+            <div className="h-[300px] md:h-[400px] mb-8 rounded-2xl overflow-hidden neon-box relative group">
               <Room3D level={selectedLevel || 1} isActive={true} />
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <p className="text-white font-display text-lg tracking-widest">VISUALIZING SECTOR {selectedLevel || 1}</p>
+              </div>
             </div>
 
             {/* Level Cards */}
@@ -250,21 +290,9 @@ const Game = () => {
               ))}
             </div>
 
-            {/* Active Puzzle */}
-            {selectedLevel && (
-              <div>
-                <div className="text-center mb-4">
-                  <span className="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary border border-primary/50 text-sm font-display">
-                    ⏱️ Time Spent: {getLevelDuration(selectedLevel) || '0s'}
-                  </span>
-                </div>
-                <LevelPuzzle
-                  level={selectedLevel}
-                  onComplete={handleCompleteLevel}
-                  showKeyInput={showKeyInput(selectedLevel)}
-                />
-              </div>
-            )}
+            <div className="text-center mt-12">
+              <p className="text-muted-foreground">Select current mission to engage.</p>
+            </div>
           </div>
         )}
       </main>
