@@ -12,6 +12,8 @@ interface TeamListProps {
     onDeductTime: (id: string) => void;
     onAddTime: (id: string) => void;
     onResetLevel: (id: string, level: number) => void;
+    onResetTimer: (id: string) => void;
+    onDeleteUser: (id: string) => void;
 }
 
 export const TeamList: React.FC<TeamListProps> = ({
@@ -19,7 +21,9 @@ export const TeamList: React.FC<TeamListProps> = ({
     onUpdateStatus,
     onDeductTime,
     onAddTime,
-    onResetLevel
+    onResetLevel,
+    onResetTimer,
+    onDeleteUser
 }) => {
     const [sortField, setSortField] = useState<keyof PlayerData | 'rank' | 'remainingTime'>('username');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -187,7 +191,7 @@ export const TeamList: React.FC<TeamListProps> = ({
                                     {team.is_completed ? formatTime(team.total_time_seconds || 0) : formatTime(team.remainingTime)}
                                 </td>
                                 <td className="p-4 text-right">
-                                    <div className="flex justify-end items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex justify-end items-center gap-2 transition-opacity">
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -238,6 +242,14 @@ export const TeamList: React.FC<TeamListProps> = ({
                     gameStartTime={selectedTeam.start_time}
                     onResetLevel={(level) => {
                         onResetLevel(selectedTeam.id, level);
+                        setSelectedTeam(null);
+                    }}
+                    onResetTimer={() => {
+                        onResetTimer(selectedTeam.id);
+                        setSelectedTeam(null);
+                    }}
+                    onDeleteUser={() => {
+                        onDeleteUser(selectedTeam.id);
                         setSelectedTeam(null);
                     }}
                 />

@@ -99,7 +99,7 @@ const FinalEscape = () => {
                 return;
             }
             if (!hasByte3) {
-                setLogs(prev => [...prev, "OVERRIDE INITIATED...", "SUCCESS. SYSTEM SHUTDOWN."]);
+                setLogs(prev => [...prev, "OVERRIDE INITIATED...", "SUCCESS. SYSTEM SHUTDOWN.", "DELETING TRACES...", "REMOVING MALWARE PAYLOADS...", "CLEANING LOGS...", "SYSTEM RESTORED."]);
                 toast.success("SYSTEM OVERRIDE COMPLETE", { description: "Shard 3/3: 'PE'" });
                 completeSubTask(5, 'byte_3');
             }

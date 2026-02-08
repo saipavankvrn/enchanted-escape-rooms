@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Users, Trophy, Clock, RefreshCw } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { TeamList } from '@/components/admin/TeamList';
+import { AddUserModal } from '@/components/admin/AddUserModal';
 import { GameMasterGuide } from '@/components/admin/sections/GameMasterGuide';
 import { PlayerData } from '@/types/admin';
 import { toast } from 'sonner';
@@ -117,6 +118,53 @@ const Admin = () => {
     }
   };
 
+  const handleResetTimer = async (id: string) => {
+    if (!confirm('Are you sure you want to RESET the timer for this user? This will restart their 50-minute countdown.')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/players/${id}/reset-timer`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        toast.success('Timer reset successfully');
+        fetchPlayers();
+      } else {
+        toast.error('Failed to reset timer');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Error resetting timer');
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (!confirm('Are you sure you want to DELETE this user? This action cannot be undone.')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/players/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        toast.success('User deleted successfully');
+        fetchPlayers();
+      } else {
+        toast.error('Failed to delete user');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Error deleting user');
+    }
+  };
 
   const completedPlayers = players.filter(p => p.is_completed);
   const activePlayers = players.filter(p => !p.is_completed && p.current_level >= 1);
@@ -142,9 +190,12 @@ const Admin = () => {
             <h1 className="text-xl font-display font-bold neon-text-purple">ADMIN DASHBOARD</h1>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={fetchPlayers}>
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <AddUserModal onUserAdded={fetchPlayers} />
+            <Button variant="ghost" size="sm" onClick={fetchPlayers}>
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -201,6 +252,8 @@ const Admin = () => {
             onDeductTime={(id) => handleTimeAdjustment(id, 'deduct')}
             onAddTime={(id) => handleTimeAdjustment(id, 'add')}
             onResetLevel={handleResetLevel}
+            onResetTimer={handleResetTimer}
+            onDeleteUser={handleDeleteUser}
           />
         </div>
 

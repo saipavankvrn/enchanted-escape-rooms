@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle, Circle, AlertTriangle } from 'lucide-react';
+import { X, CheckCircle, Circle, AlertTriangle, Activity } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -8,23 +8,34 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { LEVELS_COUNT } from '@/types/admin';
+import { format } from 'date-fns';
 
 interface LevelModalProps {
     isOpen: boolean;
     onClose: () => void;
     teamName: string;
     levelsCompleted: number[];
-    levelTimestamps?: Record<number, string>; // Replaced array with map
+    levelTimestamps?: Record<number, string>;
     gameStartTime?: string;
     currentLevel: number;
     onResetLevel: (level: number) => void;
+    onResetTimer: () => void;
+    onDeleteUser: () => void;
 }
 
-const formatTime = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
+const formatDuration = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
     return `${m}m ${s}s`;
+};
+
+const formatTime = (dateStr: string) => {
+    try {
+        return format(new Date(dateStr), 'hh:mm:ss a');
+    } catch (e) {
+        return '--';
+    }
 };
 
 export const LevelModal: React.FC<LevelModalProps> = ({
@@ -35,127 +46,138 @@ export const LevelModal: React.FC<LevelModalProps> = ({
     currentLevel,
     levelTimestamps,
     gameStartTime,
-    onResetLevel
+    onResetLevel,
+    onResetTimer,
+    onDeleteUser
 }) => {
-    const getDuration = (level: number) => {
-        // Determine Start of this level
-        let startTime: number | null = null;
 
-        if (level === 1) {
-            if (gameStartTime) {
-                startTime = new Date(gameStartTime).getTime();
-            }
-        } else {
-            const prevTimestampStr = levelTimestamps ? levelTimestamps[level - 1] : null;
-            if (prevTimestampStr) {
-                startTime = new Date(prevTimestampStr).getTime();
-            }
-        }
-
-        // Determine End of this level
-        const currentTimestampStr = levelTimestamps ? levelTimestamps[level] : null;
-        let endTime = currentTimestampStr ? new Date(currentTimestampStr).getTime() : null;
-
-        // If level is completed but no timestamp (legacy data), we can't show duration
-        const isCompleted = levelsCompleted.includes(level);
-        if (isCompleted && !endTime) {
-            return 'Legacy (No Time)';
-        }
-
-        // If level is current (active) and not completed, use Now as end time for display
-        // Note: This won't tick live unless we add a state, but it will show snapshot on open
-        if (currentLevel === level && !isCompleted && startTime) {
-            // Check if we are "in" the level. 
-            // If we have startTime, we are in it.
-            endTime = Date.now();
-        }
-
-        if (startTime && endTime) {
-            // Prevent negative time if clocks out of sync or something weird
-            return formatTime(Math.max(0, endTime - startTime));
-        }
-
-        return '--';
-    };
+    // We need a force update or local state to tick the "current" level timer if we want it live.
+    // For now, static snapshot on open is fine.
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="glass-panel border-primary/20 bg-[#0A0A0F]/95 text-foreground max-w-2xl">
+            <DialogContent className="glass-panel border-primary/20 bg-[#0A0A0F]/95 text-foreground max-w-4xl">
                 <DialogHeader>
-                    <DialogTitle className="neon-text-purple text-xl flex justify-between items-center">
-                        <span>LEVEL STATUS: {teamName}</span>
+                    <DialogTitle className="neon-text-purple text-xl tracking-widest flex items-center justify-between border-b border-primary/20 pb-4">
+                        <span>MISSION STATUS: {teamName}</span>
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="grid grid-cols-5 gap-4 my-6">
+                <div className="grid grid-cols-5 gap-4 py-6">
                     {Array.from({ length: LEVELS_COUNT }).map((_, index) => {
                         const levelNum = index + 1;
                         const isCompleted = levelsCompleted.includes(levelNum);
                         const isCurrent = currentLevel === levelNum;
 
+                        // Calculate Timeline
+                        let startTime: string | null = null;
+                        let endTime: string | null = null;
+
+                        if (levelNum === 1) {
+                            startTime = gameStartTime || null;
+                        } else {
+                            // Start time is end of previous level
+                            startTime = levelTimestamps ? levelTimestamps[levelNum - 1] : null;
+                        }
+
+                        // End time is completion of this level
+                        if (isCompleted) {
+                            endTime = levelTimestamps ? levelTimestamps[levelNum] : null;
+                        } else if (isCurrent) {
+                            // For current level, "end" is technically "now" for duration calc
+                            endTime = new Date().toISOString();
+                        }
+
+                        let duration = "--";
+                        if (startTime && endTime) {
+                            const start = new Date(startTime).getTime();
+                            const end = new Date(endTime).getTime();
+                            duration = formatDuration(Math.max(0, end - start));
+                        }
+
                         return (
                             <div
                                 key={levelNum}
-                                className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${isCompleted
-                                    ? 'bg-success/20 border-success text-success'
-                                    : isCurrent
-                                        ? 'bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(139,92,246,0.3)]'
-                                        : 'bg-muted/10 border-muted text-muted-foreground'
-                                    }`}
+                                className={`
+                                    relative flex flex-col p-4 rounded-xl border-2 transition-all duration-300
+                                    ${isCompleted ? 'bg-green-900/10 border-green-500/50' :
+                                        isCurrent ? 'bg-primary/10 border-primary shadow-[0_0_20px_rgba(139,92,246,0.2)]' :
+                                            'bg-muted/5 border-white/5 opacity-60'}
+                                `}
                             >
-                                <div className="font-bold mb-2">LVL {levelNum}</div>
-                                {isCompleted ? (
-                                    <CheckCircle className="w-6 h-6" />
-                                ) : isCurrent ? (
-                                    <ActivityIcon className="w-6 h-6 animate-pulse" />
-                                ) : (
-                                    <Circle className="w-6 h-6" />
-                                )}
-
-                                <div className="text-[10px] mt-1 font-mono opacity-80 h-4 min-w-[50px] text-center">
-                                    {getDuration(levelNum)}
+                                <div className="flex justify-between items-start mb-3">
+                                    <span className={`text-xl font-display font-bold ${isCompleted ? 'text-green-400' : isCurrent ? 'text-primary' : 'text-slate-500'}`}>
+                                        LVL {levelNum}
+                                    </span>
+                                    {isCompleted ? <CheckCircle className="w-5 h-5 text-green-500" /> :
+                                        isCurrent ? <Activity className="w-5 h-5 text-primary animate-pulse" /> :
+                                            <Circle className="w-5 h-5 text-slate-700" />}
                                 </div>
 
-                                <div className="mt-4 w-full">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="w-full text-[10px] h-6 border border-white/10 hover:bg-destructive/20 hover:text-destructive"
-                                        onClick={() => {
-                                            if (confirm(`Are you sure you want to RESET ${teamName} to Level ${levelNum}? This will clear progress for levels ${levelNum} and above.`)) {
-                                                onResetLevel(levelNum);
-                                            }
-                                        }}
-                                    >
-                                        Reset Here
-                                    </Button>
+                                <div className="space-y-2 text-xs font-mono mb-4 flex-1">
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Duration:</span>
+                                        <span className={`font-bold ${isCompleted ? 'text-white' : isCurrent ? 'text-yellow-400 animate-pulse' : 'text-slate-600'}`}>
+                                            {duration}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Started:</span>
+                                        <span className="text-slate-300">{startTime ? formatTime(startTime) : '--'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Completed:</span>
+                                        <span className="text-slate-300">{isCompleted && levelTimestamps?.[levelNum] ? formatTime(levelTimestamps[levelNum]) : '--'}</span>
+                                    </div>
                                 </div>
+
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="w-full text-xs h-7 border-slate-700 hover:bg-destructive hover:text-white hover:border-destructive transition-colors"
+                                    onClick={() => {
+                                        if (confirm(`RESET LEVEL PROGRESS?\n\nTeam: ${teamName}\nTarget Level: ${levelNum}\n\nWARNING: This will wipe progress for this level and all subsequent levels.`)) {
+                                            onResetLevel(levelNum);
+                                            onClose();
+                                        }
+                                    }}
+                                >
+                                    Reset
+                                </Button>
                             </div>
                         );
                     })}
                 </div>
 
-                <div className="text-center text-muted-foreground text-sm">
-                    STATUS: {levelsCompleted.length} / {LEVELS_COUNT} UPLINKS ESTABLISHED
+                <div className="border-t border-white/10 pt-4 flex justify-between items-center">
+                    <div className="flex gap-2">
+                        <Button
+                            variant="destructive"
+                            className="bg-red-900/40 hover:bg-red-800 text-red-100 border border-red-800"
+                            onClick={() => {
+                                onClose();
+                                onDeleteUser();
+                            }}
+                        >
+                            Delete Team
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            className="bg-yellow-900/40 hover:bg-yellow-800 text-yellow-100 border border-yellow-800"
+                            onClick={() => {
+                                onClose();
+                                onResetTimer();
+                            }}
+                        >
+                            Reset Timer
+                        </Button>
+                    </div>
+                    <div className="text-xs text-slate-400 font-mono text-right">
+                        <div>SESSION ID: {btoa(teamName).substring(0, 8)}</div>
+                        <div>TOTAL UPLINKS: {levelsCompleted.length} / {LEVELS_COUNT}</div>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>
     );
 };
-
-const ActivityIcon = ({ className }: { className?: string }) => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-    </svg>
-);

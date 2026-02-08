@@ -1,5 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 
 const router = express.Router();
@@ -25,7 +26,7 @@ const adminAuth = async (req, res, next) => {
 router.get('/players', adminAuth, async (req, res) => {
     try {
         const players = await User.find({ role: 'user' }) // Optionally filter out admins
-            .select('username currentLevel completedLevels totalTimeSeconds isCompleted createdAt endTime startTime')
+            .select('username currentLevel completedLevels totalTimeSeconds isCompleted createdAt endTime startTime levelTimestamps')
             .sort({ createdAt: -1 });
 
         // Map to match frontend expected structure if slightly different, 
@@ -123,6 +124,112 @@ router.post('/players/:id/time', adminAuth, async (req, res) => {
         res.json({ message: 'Time updated successfully', user });
     } catch (error) {
         console.error('Update time error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Reset Timer for User
+router.post('/players/:id/reset-timer', adminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        // Reset Timer: Set start time to NOW. Clear totalTime.
+        // This gives them a full 50 minutes starting from this moment.
+        // It does NOT reset their level progress unless they explicitly ask for that too.
+        user.startTime = new Date();
+        user.endTime = null;
+        user.totalTimeSeconds = null;
+        user.isCompleted = false; // If they were completed, they are active again with new timer?
+        // Maybe check if completed? If completed, maybe don't reset timer unless we also reset level?
+        // User asked for "reset timer", usually to give another chance.
+
+        await user.save();
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('postgres_changes', { event: 'UPDATE', payload: user });
+        }
+
+        res.json({ message: 'Timer reset successfully', user });
+    } catch (error) {
+        console.error('Reset timer error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Delete User
+router.delete('/players/:id', adminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findByIdAndDelete(id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const io = req.app.get('io');
+        if (io) {
+            // Emit DELETE event so frontend removes the row
+            io.emit('postgres_changes', { event: 'DELETE', payload: { _id: id } });
+        }
+
+        res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Delete user error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Create User
+router.post('/players/create', adminAuth, async (req, res) => {
+    try {
+        const { username, email, password } = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({ error: 'Please provide all fields' });
+        }
+
+        // Check if user exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: 'User already exists' });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 12);
+
+        // Create user
+        const newUser = new User({
+            username,
+            email,
+            password: hashedPassword,
+            role: 'user', // Admins created this way are regular players by default
+            currentLevel: 1,
+            completedLevels: [],
+            isCompleted: false
+        });
+
+        await newUser.save();
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('postgres_changes', { event: 'INSERT', payload: newUser });
+        }
+
+        // Return the created user (sans password)
+        res.status(201).json({
+            message: 'User created successfully',
+            user: {
+                id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                role: newUser.role,
+                created_at: newUser.createdAt
+            }
+        });
+    } catch (error) {
+        console.error('Create user error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });

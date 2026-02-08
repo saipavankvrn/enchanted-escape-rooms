@@ -226,12 +226,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
         await saveGameState({
           completedLevels: newCompletedLevels,
-          currentLevel: 5,
-          endTime: now,
-          levelTimestamps: newTimestamps,
           totalTimeSeconds: totalTime,
           isCompleted: true,
         });
+        setElapsedTime(totalTime); // Force final time display
       } else {
         setGameState(prev => ({
           ...prev,
