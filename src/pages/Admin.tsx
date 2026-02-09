@@ -14,7 +14,7 @@ const API_URL = `http://${window.location.hostname}:5000/api/admin`;
 const SOCKET_URL = `http://${window.location.hostname}:5000`;
 
 const Admin = () => {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -183,9 +183,9 @@ const Admin = () => {
       <header className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-border/50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/game')}>
+            <Button variant="ghost" size="sm" onClick={() => signOut()}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Game
+              Logout
             </Button>
             <h1 className="text-xl font-display font-bold neon-text-purple">ADMIN DASHBOARD</h1>
           </div>

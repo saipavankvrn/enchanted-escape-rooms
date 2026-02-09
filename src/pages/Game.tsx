@@ -14,7 +14,7 @@ const TOTAL_TIME = 50 * 60; // 50 minutes in seconds
 
 const Game = () => {
   const { user, signOut, loading, isAdmin } = useAuth();
-  const { gameState, startGame, completeLevel, elapsedTime, isPlaying } = useGameState();
+  const { gameState, startGame, completeLevel, elapsedTime, isPlaying, applyPenalty } = useGameState();
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [isInMission, setIsInMission] = useState(false);
   const navigate = useNavigate();
@@ -25,8 +25,10 @@ const Game = () => {
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
+    } else if (!loading && user && isAdmin) {
+      navigate('/admin');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, isAdmin, navigate]);
 
   useEffect(() => {
     if (gameState.currentLevel && !gameState.isCompleted && !isDefeated) {
@@ -262,6 +264,7 @@ const Game = () => {
                 level={selectedLevel}
                 onComplete={handleCompleteLevel}
                 showKeyInput={showKeyInput(selectedLevel)}
+                onPenalty={applyPenalty}
               />
             </div>
           </div>

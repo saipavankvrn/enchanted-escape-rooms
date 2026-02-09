@@ -17,10 +17,10 @@ const LEVEL_DATA = [
         theme: "Advanced Phishing Detection",
         key: "LEVEL-1-COMPLETE",
         tasks: [
-            { name: "Threat Identification", solution: "Search 60 emails. Locate 'Vulnerability Assessment' / 'Pen-Test' email (Index ~38).", fragment: "Threat ID" },
+            { name: "Threat Identification", solution: "Search 30 emails. Locate 'Vulnerability Assessment' / 'Pen-Test' email (24th Email).", fragment: "Threat ID" },
             { name: "Payload Analysis", solution: "Find attachment with double extension (.pdf.exe). Click 'ANALYZE THREAT'.", fragment: "LEVEL-1-COMPLETE" }
         ],
-        tools: ["Secure Inbox (60 Emails)", "Threat Analyzer Module"]
+        tools: ["Secure Inbox (30 Emails)", "Threat Analyzer Module"]
     },
     {
         level: 2,
@@ -28,43 +28,43 @@ const LEVEL_DATA = [
         theme: "Video OSINT Analysis",
         key: "SHADOW",
         tasks: [
-            { name: "Location", solution: "Analyze video. Identify 'Chandigarh International Airport' (IXC).", fragment: "SHA" },
-            { name: "Timestamp", solution: "Find time '21:14' (9:14 PM) on screens/clocks.", fragment: "DOW" }
+            { name: "Location", solution: "Analyze video. Identify 'Chandigarh' connection (Le Corbusier).", fragment: "SHA" },
+            { name: "Timestamp", solution: "1 Minute Penalty for hint usage.", fragment: "DOW" }
         ],
         tools: ["Video Player", "Flight Tracker/Map Knowledge"]
     },
     {
         level: 3,
-        title: "Targeted Penetration",
-        theme: "Dictionary Attack (Hydra)",
+        title: "The Cursed Library",
+        theme: "SQL Injection / Brute Force",
         key: "DICT_ATTACK_MASTER",
         tasks: [
-            { name: "Scraping", solution: "Run: cewl https://omega-corp.internal -w wordlist.txt", fragment: "DICT_" },
-            { name: "Brute Force", solution: "Run: hydra -l admin -P wordlist.txt 10.10.10.55", fragment: "ATTACK_MASTER" }
+            { name: "Command Injection", solution: "Type 'help' to see commands.", fragment: "DICT_" },
+            { name: "Brute Force", solution: "Run: cewl/hydra sequence.", fragment: "ATTACK_MASTER" }
         ],
         tools: ["Terminal", "cewl", "hydra"]
     },
     {
         level: 4,
-        title: "The Enigma Vault",
+        title: "Cold Kitchen",
         theme: "Cryptography",
         key: "TH3_M4SK_0F_Z0RR0",
         tasks: [
-            { name: "Artifact Analysis", solution: "'VRvgX000c2euTGZqLqBynyH=' is Base64 encoded, but deciphering it yields garbage.", fragment: "Artifact" },
-            { name: "Clue Decoding", solution: "Sticky note 'ALPHA' suggests Vigenere Key. 'My mother use Vigenere while cooking!!!!' is the hint.", fragment: "Hint: Cooking" },
-            { name: "Decryption", solution: "Decrypt (Vigenere) 'VRvgX000c2euTGZqLqBynyH=' with key 'ALPHA' -> 'VGgzX000c2tfMGZfWjBycjA='. Then Base64 Decode -> 'Th3_M4sk_0f_Z0rr0'", fragment: "Flag" }
+            { name: "Artifact Analysis", solution: "'VRvgX000c2euTGZqLqBynyH=' is Base64 encoded.", fragment: "Artifact" },
+            { name: "Clue Decoding", solution: "Sticky note 'ALPHA'. Hint 'Cooking' suggests Vigenere.", fragment: "Hint: Cooking" },
+            { name: "Decryption", solution: "Vigenere Decode (Key: ALPHA) -> Base64 Decode -> 'Th3_M4sk_0f_Z0rr0'", fragment: "Flag" }
         ],
         tools: ["CyberChef", "Vigenere Cipher Decoder", "Base64 Decoder"]
     },
     {
         level: 5,
-        title: "The Needle in the Digital Haystack",
+        title: "The Shadow Heart",
         theme: "Network Forensics",
         key: "P64P_4N4L7S1S_SU55355FUL_4624A8B6",
         tasks: [
-            { name: "Traffic Analysis", solution: "Download 'traffic_dump.pcap'. Open in Wireshark.", fragment: "PCAP" },
-            { name: "Protocol Filtering", solution: "Hint 'Chennai(20) to Delhi(21)' refers to FTP Ports 20/21. Filter for 'ftp' or 'tcp.port == 21'.", fragment: "FTP" },
-            { name: "Flag Extraction", solution: "Follow TCP Stream on FTP packets. Flag is in the data stream: 'P64P_4N4L7S1S_SU55355FUL_4624A8B6'", fragment: "Flag" }
+            { name: "Traffic Analysis", solution: "Download 'traffic_dump.pcap'.", fragment: "PCAP" },
+            { name: "Hint Penalty", solution: "3 Minute Penalty for hint usage.", fragment: "FTP" },
+            { name: "Flag Extraction", solution: "Filter FTP/TCP stream. Flag: 'P64P_4N4L7S1S_SU55355FUL_4624A8B6'", fragment: "Flag" }
         ],
         tools: ["Wireshark", "Network Miner", "Packet Analysis"]
     }

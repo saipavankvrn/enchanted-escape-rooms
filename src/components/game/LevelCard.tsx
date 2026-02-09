@@ -13,15 +13,15 @@ const levelNames = [
   'The Whispering Porch',
   'The Hall of Mirrors',
   'The Cursed Library',
-  'The Enigma Vault',
-  'The Final Escape',
+  'Cold Kitchen',
+  'The Shadow Heart',
 ];
 
 const levelDescriptions = [
   'Identify and neutralize the malware threat.',
   'Find the truth amidst the reflections.',
-  'Unlock the gate with the strongest passwords.',
   'Bypass the vault security with SQL injection.',
+  'Decrypt the enigma code.',
   'Execute the final override command.',
 ];
 

@@ -7,46 +7,9 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_change_this';
 
 // Register
+// Register - DISABLED (Only admins can add users via /api/admin/players/create)
 router.post('/register', async (req, res) => {
-    try {
-        const { email, password, username } = req.body;
-
-        // Check if user exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ error: 'User already exists' });
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 12);
-
-        // Create user
-        const newUser = new User({
-            email,
-            password: hashedPassword,
-            username,
-            // Check for admin email domain
-            role: email.endsWith('@escape.edu.in') ? 'admin' : 'user'
-        });
-
-        await newUser.save();
-
-        // Generate token
-        const token = jwt.sign({ userId: newUser._id, role: newUser.role }, JWT_SECRET, { expiresIn: '7d' });
-
-        res.status(201).json({
-            token,
-            user: {
-                id: newUser._id,
-                email: newUser.email,
-                username: newUser.username,
-                role: newUser.role
-            }
-        });
-    } catch (error) {
-        console.error('Register error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
+    return res.status(403).json({ error: 'Public registration is disabled. Only admins can add participants.' });
 });
 
 // Login

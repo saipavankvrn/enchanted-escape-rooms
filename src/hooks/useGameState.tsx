@@ -66,7 +66,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       interval = setInterval(() => {
         const now = new Date();
         const elapsed = Math.floor((now.getTime() - gameState.startTime!.getTime()) / 1000);
-        setElapsedTime(elapsed);
+        if (elapsed >= 3000) { // 50 minutes limit
+          setElapsedTime(3000);
+          setIsPlaying(false);
+        } else {
+          setElapsedTime(elapsed);
+        }
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -98,10 +103,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         });
 
         if (startTime && !data.is_completed) {
-          setIsPlaying(true);
           const now = new Date();
           const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
-          setElapsedTime(elapsed);
+
+          if (elapsed >= 3000) {
+            setElapsedTime(3000);
+            setIsPlaying(false);
+          } else {
+            setElapsedTime(elapsed);
+            setIsPlaying(true);
+          }
         } else if (data.total_time_seconds) {
           setElapsedTime(data.total_time_seconds);
         }

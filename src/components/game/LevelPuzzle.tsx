@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 import SecretKeyInput from './SecretKeyInput';
-import PasswordRoom from './PasswordRoom';
+
 import WhisperingPorch from './level1/WhisperingPorch';
 import HallOfMirrors from './level2/HallOfMirrors';
 import CursedLibrary from './level3/CursedLibrary';
@@ -13,6 +13,7 @@ interface LevelPuzzleProps {
   level: number;
   onComplete: (key?: string) => void;
   showKeyInput: boolean;
+  onPenalty?: (seconds: number) => void;
 }
 
 const puzzles = [
@@ -26,34 +27,36 @@ const puzzles = [
   {
     title: "The Hall of Mirrors",
     description: "Airports are global hubs where cultures intersect. A fugitive signal was intercepted from an undisclosed terminal. Analyze the footage to pinpoint the exact location and time.",
-    hint: "Pay attention to flight boards, architectural landmarks, or distinct cultural markers. The file name is 'level2_osint.mp4'.",
+    hint: "The city of beauty",
     action: "Begin Analysis",
-    secretHint: "Every reflection tells a story. Look for the 'Chandigarh' connection.",
+    secretHint: "Designed by Le Corbusier. It serves as the capital of two states.",
+    penalty: 60,
   },
   {
     title: "Targeted Penetration",
     description: "The target is Omega Corp. You must gain SSH access to their admin server (10.10.10.55). Standard wordlists have failed, so you must generate a custom dictionary from their website content.",
-    hint: "Use 'cewl' to scrape the site for words, then 'hydra' to brute force the login.",
+    hint: "Use 'help' command",
     action: "Launch Terminal",
-    secretHint: "The password is hidden in plain sight on the 'About Us' page.",
+    secretHint: "Run 'cewl' then 'hydra' to crack the password.",
   },
   {
-    title: "The Enigma Vault",
-    description: "A mysterious data string has been recovered. It appears to be standard encoding, but standard tools fail. A sticky note with 'ALPHA' was attached to the server.",
-    hint: "Use the 'Decrypt Hint' button in the vault interface if you are stuck. It costs time.",
+    title: "Cold Kitchen",
+    description: "A mysterious data string has been recovered. First, you must decipher it using the Vigenere Cipher, then use a Base64 decoder to reveal the final key. A sticky note with 'ALPHA' was attached to the server.",
+    hint: "Use CyberChef. Recipe: Vigenere Decode (Key: ALPHA) -> From Base64.",
     action: "Decode & Decrypt",
-    secretHint: "The key is the Flag.",
+    secretHint: "The output of Vigenere is a Base64 string. Decode that to get the flag.",
   },
   {
-    title: "Level 5: The Needle in the Digital Haystack",
+    title: "The Shadow Heart",
     description: "We have successfully tapped the adversary's communication line, but they are using 'Security through Obscurity'. They have buried their secret flag inside a massive stream of network traffic. Download the captured packet file and perform a forensic deep dive to locate the hidden flag string.",
     hint: "Warning: Requesting a hint will cost you 3 minutes. The flag is buried deep.",
     action: "Deep Packet Inspection",
-    secretHint: "Today i am travelling from Chennai(20) to Delhi(21) for Cyber Catalyst 2026",
+    secretHint: "Today i am travelling from delhi(20) to chennai(21) for Cyber Catalyst 2026",
+    penalty: 180,
   },
 ];
 
-const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
+const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzleProps) => {
   const [showHint, setShowHint] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const puzzle = puzzles[level - 1];
@@ -176,12 +179,21 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput }: LevelPuzzleProps) => {
 
         {!showHint && puzzle.hint && (
           <Button
-            onClick={() => setShowHint(true)}
+            onClick={() => {
+              if (puzzle.penalty && onPenalty) {
+                if (confirm(`Warning: This hint costs ${puzzle.penalty / 60} minute(s) penalty. Proceed?`)) {
+                  onPenalty(puzzle.penalty);
+                  setShowHint(true);
+                }
+              } else {
+                setShowHint(true);
+              }
+            }}
             variant="ghost"
             className="w-full text-muted-foreground hover:text-primary"
           >
             <Lightbulb className="w-4 h-4 mr-2" />
-            Need a hint?
+            Need a hint? {puzzle.penalty ? `(-${puzzle.penalty / 60}m)` : ''}
           </Button>
         )}
       </div>
