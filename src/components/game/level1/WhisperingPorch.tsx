@@ -1,256 +1,239 @@
 import { useState } from 'react';
-import { Mail, Shield, AlertTriangle, FileText, Globe, MousePointer2, Archive, Trash2, Reply, Search, CheckCircle2 } from 'lucide-react';
+import { Mail, CheckCircle2, AlertTriangle, FileText, Globe, Move, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useGameState } from '@/hooks/useGameState';
 import { getLevel1Emails, Email } from './Level1Data';
 
 const WhisperingPorch = () => {
-    const { gameState, completeSubTask } = useGameState();
-    const [emails] = useState<Email[]>(getLevel1Emails());
-    const [selectedEmailId, setSelectedEmailId] = useState<number | null>(null);
-    const [analyzingIds, setAnalyzingIds] = useState<number[]>([]);
+    const { completeSubTask, gameState } = useGameState();
+    const [initialEmails] = useState<Email[]>(getLevel1Emails());
 
-    // Single task completion check
+    // State for the three buckets
+    const [inbox, setInbox] = useState<Email[]>(initialEmails);
+    const [safeBox, setSafeBox] = useState<Email[]>([]);
+    const [phishingBox, setPhishingBox] = useState<Email[]>([]);
+
+    const [draggedEmail, setDraggedEmail] = useState<Email | null>(null);
+    const [isChecking, setIsChecking] = useState(false);
+
     const collectedBytes = gameState.subTasksCompleted[1] || [];
     const hasKey = collectedBytes.includes('byte_1');
 
-    const selectedEmail = emails.find(e => e.id === selectedEmailId);
+    const handleDragStart = (e: React.DragEvent, email: Email) => {
+        setDraggedEmail(email);
+        e.dataTransfer.setData('text/plain', email.id.toString());
+        e.dataTransfer.effectAllowed = 'move';
+    };
 
-    const handleFlagSender = (email: Email) => {
-        if (email.isPhishing) {
-            toast.success("Suspicious sender flagged.", { description: "Good eye, but is this the critical threat?" });
-        } else {
-            toast.info("Sender flagged for review.");
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const moveToBox = (targetBox: 'inbox' | 'safe' | 'phishing', email: Email) => {
+        // Remove from all boxes first
+        setInbox(prev => prev.filter(e => e.id !== email.id));
+        setSafeBox(prev => prev.filter(e => e.id !== email.id));
+        setPhishingBox(prev => prev.filter(e => e.id !== email.id));
+
+        // Add to target
+        if (targetBox === 'inbox') setInbox(prev => [...prev, email]);
+        if (targetBox === 'safe') setSafeBox(prev => [...prev, email]);
+        if (targetBox === 'phishing') setPhishingBox(prev => [...prev, email]);
+    };
+
+    const handleDrop = (e: React.DragEvent, targetBox: 'inbox' | 'safe' | 'phishing') => {
+        e.preventDefault();
+        if (draggedEmail) {
+            moveToBox(targetBox, draggedEmail);
+            setDraggedEmail(null);
         }
     };
 
-    const handleAnalyzeEmail = async (email: Email) => {
-        if (analyzingIds.includes(email.id)) return;
+    const handleCheck = async () => {
+        if (inbox.length > 0) {
+            toast.error("Incomplete Task", { description: "Please classify all emails before checking." });
+            return;
+        }
 
-        setAnalyzingIds(prev => [...prev, email.id]);
-        toast.info("Initiating Deep Scan analysis...", { duration: 2000 });
+        setIsChecking(true);
 
-        // Simulate analysis delay
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Simulate processing
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        if (email.isMalware) {
+        let mistakes = 0;
+
+        // Check Safe Box (Should NOT have malware)
+        safeBox.forEach(e => {
+            if (e.isMalware) mistakes++;
+        });
+
+        // Check Phishing Box (Should HAVE malware)
+        phishingBox.forEach(e => {
+            if (!e.isMalware) mistakes++;
+        });
+
+        if (mistakes === 0) {
             if (!hasKey) {
-                toast.success("CRITICAL THREAT DETECTED: Ransomware Payload Identified!", {
-                    description: "Threat neutralized. System Key Generated: 'LEVEL-1-COMPLETE'",
+                toast.success("THREAT ANALYSIS SUCCESSFUL", {
+                    description: "All emails correctly classified. System Key Generated.",
                     duration: 5000
                 });
                 completeSubTask(1, 'byte_1');
             } else {
-                toast.info("Threat already neutralized.");
+                toast.success("Analysis Verified: Perfect Classification.");
             }
         } else {
-            toast.success("Analysis Complete: No active threats found.", { description: "This email appears safe." });
+            toast.error("Classification Failed", {
+                description: `${mistakes} email(s) are incorrectly placed. Review your choices.`
+            });
         }
-
-        setAnalyzingIds(prev => prev.filter(id => id !== email.id));
+        setIsChecking(false);
     };
 
+    const handleReset = () => {
+        setInbox(initialEmails);
+        setSafeBox([]);
+        setPhishingBox([]);
+        toast.info("Inbox Reset");
+    };
+
+    // Render an Email Card
+    const EmailCard = ({ email }: { email: Email }) => (
+        <div
+            draggable
+            onDragStart={(e) => handleDragStart(e, email)}
+            className="bg-slate-800 p-3 rounded-lg border border-slate-700 cursor-grab active:cursor-grabbing hover:border-primary/50 hover:bg-slate-750 transition-all shadow-sm group relative"
+        >
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Move className="w-4 h-4 text-slate-500" />
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${email.isMalware ? 'bg-red-900/20 text-red-400' : 'bg-blue-900/20 text-blue-400'}`}>
+                    {email.sender[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-slate-200 truncate">{email.sender.split('<')[0]}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{email.sender.match(/<(.+)>/)?.[1]}</div>
+                </div>
+            </div>
+            <div className="text-sm font-medium text-slate-100 mb-1 truncate">{email.subject}</div>
+            <p className="text-xs text-slate-400 line-clamp-2 mb-2">{email.content}</p>
+
+            <div className="flex gap-2">
+                {email.hasAttachment && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-700 rounded text-slate-300 flex items-center gap-1">
+                        <FileText className="w-3 h-3" /> {email.attachmentName?.split('.').pop()}
+                    </span>
+                )}
+                {email.hasLink && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-indigo-900/30 text-indigo-300 rounded flex items-center gap-1">
+                        <Globe className="w-3 h-3" /> Link
+                    </span>
+                )}
+            </div>
+        </div>
+    );
+
     return (
-        <div className="w-full max-w-7xl mx-auto p-4 flex flex-col gap-6 h-[85vh]">
-            {/* Progress HUD */}
-            <div className="flex justify-center gap-4 mb-2 shrink-0">
-                <div className={`px-4 py-2 rounded border transition-colors ${hasKey ? 'bg-green-900/50 border-green-500 text-green-200' : 'bg-black/40 border-slate-700 text-slate-500'}`}>
-                    <span className="text-xs uppercase font-bold block">Threat Status</span>
-                    <div className="flex items-center gap-2">
-                        {hasKey ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4 text-red-500 animate-pulse" />}
-                        <span>{hasKey ? "NEUTRALIZED" : "ACTIVE THREAT DETECTED"}</span>
+        <div className="h-full flex flex-col gap-4 max-w-6xl mx-auto p-2">
+
+            {/* Header / HUD */}
+            <div className="flex items-center justify-between bg-slate-900/80 p-4 rounded-xl border border-slate-800 backdrop-blur">
+                <div>
+                    <h2 className="text-xl font-display font-bold text-white">Threat Triage Protocol</h2>
+                    <p className="text-sm text-slate-400">Classify all emails. Drag to the correct folder.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${hasKey ? 'bg-green-500/10 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                        {hasKey ? <CheckCircle2 className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+                        <span className="font-mono font-bold">{hasKey ? "KEY: LEVEL-1-COMPLETE" : "CLASSIFICATION PENDING"}</span>
                     </div>
                 </div>
+            </div>
 
-                {hasKey && (
-                    <div className="px-4 py-2 rounded border bg-yellow-500/20 border-yellow-500 text-yellow-200 animate-pulse">
-                        <span className="text-xs uppercase font-bold block">Mission Complete</span>
-                        <span>KEY: LEVEL-1-COMPLETE</span>
+            {/* Inbox Area (Source) */}
+            <div
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, 'inbox')}
+                className="bg-slate-900/50 border-2 border-dashed border-slate-700 rounded-xl p-4 min-h-[160px] flex flex-col transition-colors hover:bg-slate-900/80 hover:border-slate-600"
+            >
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <Mail className="w-4 h-4" /> Incoming Stream ({inbox.length})
+                    </h3>
+                    {inbox.length === 0 && <span className="text-xs text-green-500 font-mono">ALL ITEMS PROCESSED</span>}
+                    <Button variant="ghost" size="sm" onClick={handleReset} className="h-6 text-xs text-slate-500 hover:text-white">
+                        <RefreshCw className="w-3 h-3 mr-1" /> Reset
+                    </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {inbox.map(email => <EmailCard key={email.id} email={email} />)}
+                </div>
+                {inbox.length === 0 && (
+                    <div className="flex-1 flex items-center justify-center text-slate-600 text-sm italic">
+                        No pending emails.
                     </div>
                 )}
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-1 shadow-2xl relative">
-                {/* Sidebar */}
-                <div className="w-20 bg-slate-950 border-r border-slate-800 flex flex-col items-center py-6 gap-6 shrink-0 z-20">
-                    <Button
-                        variant="default"
-                        size="icon"
-                        title="Secure Inbox"
-                        className="w-12 h-12 rounded-xl bg-primary"
-                    >
-                        <Mail className="w-6 h-6" />
-                    </Button>
+            {/* Drop Zones Container */}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[300px]">
 
-                    <div className="mt-auto flex flex-col gap-4">
-                        <Button variant="ghost" size="icon" className="w-12 h-12 rounded-xl opacity-50 cursor-not-allowed">
-                            <Archive className="w-5 h-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="w-12 h-12 rounded-xl opacity-50 cursor-not-allowed">
-                            <Trash2 className="w-5 h-5" />
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Content Area */}
-                <div className="flex-1 flex overflow-hidden relative z-10">
-                    {/* Email List */}
-                    <div className="w-[400px] border-r border-slate-800 bg-slate-900/50 flex flex-col">
-                        <div className="p-4 border-b border-slate-800 bg-slate-900/80 sticky top-0 z-10 backdrop-blur-sm">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="font-display font-bold text-white tracking-wider">INBOX ({emails.length})</h2>
-                                <span className="text-xs text-slate-500 uppercase font-mono">Secure Connection</span>
-                            </div>
-                            <div className="relative">
-                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                                <input
-                                    type="text"
-                                    placeholder="Search emails..."
-                                    className="w-full bg-slate-950/50 border border-slate-700 rounded-lg py-2 pl-9 pr-4 text-sm text-slate-300 focus:outline-none focus:border-primary/50 transition-colors"
-                                />
-                            </div>
-                        </div>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar">
-                            {emails.map(email => (
-                                <div
-                                    key={email.id}
-                                    onClick={() => setSelectedEmailId(email.id)}
-                                    className={`p-4 border-b border-slate-800/50 cursor-pointer hover:bg-slate-800/80 transition-all group ${selectedEmailId === email.id ? 'bg-slate-800 border-l-4 border-l-primary' : 'border-l-4 border-l-transparent'}`}
-                                >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <div className={`font-bold text-sm truncate pr-2 ${selectedEmailId === email.id ? 'text-white' : 'text-slate-300 group-hover:text-white'}`}>
-                                            {email.sender.split('<')[0].replace(/"/g, '')}
-                                        </div>
-                                        {email.hasAttachment && <FileText className="w-3 h-3 text-slate-500 mt-1 shrink-0" />}
-                                    </div>
-                                    <div className={`text-xs mb-1 truncate font-medium ${!email.read ? 'text-white' : 'text-slate-400'}`}>{email.subject}</div>
-                                    <div className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{email.content}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Email Viewer */}
-                    <div className="flex-1 bg-slate-950/30 flex flex-col relative overflow-hidden">
-                        {selectedEmail ? (
-                            <div className="flex flex-col h-full animate-in fade-in duration-300">
-                                {/* Viewer Header */}
-                                <div className="border-b border-slate-800 p-6 glass-panel shrink-0 bg-slate-900/50">
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div className="flex-1 mr-4 overflow-hidden">
-                                            <h3 className="text-xl font-bold text-white mb-2 leading-snug">{selectedEmail.subject}</h3>
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-indigo-900/30 border border-indigo-500/30 flex items-center justify-center text-lg font-bold shrink-0 text-indigo-400">
-                                                    {selectedEmail.sender.charAt(0)}
-                                                </div>
-                                                <div className="overflow-hidden min-w-0">
-                                                    <div className="text-sm font-bold text-slate-200 truncate">
-                                                        {selectedEmail.sender.split('<')[0].replace(/"/g, '')}
-                                                    </div>
-                                                    <div className="text-xs text-slate-400 font-mono flex items-center gap-2">
-                                                        <span className="truncate">{selectedEmail.sender.match(/<(.+)>/)?.[1] || selectedEmail.sender}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2 shrink-0">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-9 px-4 uppercase tracking-wider text-red-400 hover:text-red-300 hover:bg-red-950 border border-red-900/30 hover:border-red-500/50 transition-all font-bold"
-                                                onClick={() => handleFlagSender(selectedEmail)}
-                                            >
-                                                <AlertTriangle className="w-4 h-4 mr-2" />
-                                                Report
-                                            </Button>
-                                            <Button
-                                                variant={hasKey ? "outline" : "destructive"}
-                                                size="sm"
-                                                className={`gap-2 font-bold tracking-wide shadow-lg ${analyzingIds.includes(selectedEmail.id) ? 'opacity-80' : ''}`}
-                                                onClick={() => handleAnalyzeEmail(selectedEmail)}
-                                                disabled={analyzingIds.includes(selectedEmail.id)}
-                                            >
-                                                {analyzingIds.includes(selectedEmail.id) ? (
-                                                    <>
-                                                        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                                        ANALYZING...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Shield className="w-4 h-4" />
-                                                        ANALYZE THREAT
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    {/* Quick Actions Bar */}
-                                    <div className="flex items-center gap-4 pt-2 border-t border-slate-800/50">
-                                        <div className="text-xs text-slate-500 font-mono">ID: {selectedEmail.sysId}</div>
-                                        <div className="h-4 w-px bg-slate-800" />
-                                        <div className="text-xs text-slate-500">{new Date(selectedEmail.timestamp).toLocaleString()}</div>
-                                    </div>
-                                </div>
-
-                                {/* Viewer Body */}
-                                <div className="flex-1 overflow-y-auto p-8 text-slate-300 text-sm whitespace-pre-wrap leading-relaxed max-w-4xl mx-auto w-full">
-                                    {selectedEmail.content}
-
-                                    {selectedEmail.hasLink && (
-                                        <div className="mt-8 p-4 bg-slate-900/50 rounded-lg border border-indigo-500/20 hover:border-indigo-500/50 transition-colors group">
-                                            <div className="text-xs text-indigo-400 uppercase mb-2 flex items-center gap-2 font-bold tracking-wider">
-                                                <Globe className="w-3 h-3" /> External Link
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-indigo-950/50 rounded text-indigo-300">
-                                                    <Globe className="w-5 h-5" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-sm font-mono text-blue-400 truncate">{selectedEmail.linkUrl}</div>
-                                                    <div className="text-xs text-slate-500 mt-1">Status: Unverified Destination</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {selectedEmail.hasAttachment && (
-                                        <div className="mt-8 p-4 bg-slate-900/50 rounded-lg border border-slate-700 hover:border-slate-500/50 transition-colors">
-                                            <div className="text-xs text-slate-500 uppercase mb-3 flex items-center gap-2 font-bold tracking-wider">
-                                                <FileText className="w-3 h-3" /> Attachment
-                                            </div>
-                                            <div className="flex items-center justify-between bg-black/20 p-3 rounded border border-slate-800">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-red-900/20 text-red-500 flex items-center justify-center rounded uppercase text-xs font-bold px-1 border border-red-500/20">
-                                                        {selectedEmail.attachmentName?.split('.').pop()?.substring(0, 3)}
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-sm font-mono text-slate-200 block">{selectedEmail.attachmentName}</span>
-                                                        <span className="text-xs text-slate-500">{(Math.random() * 2 + 0.5).toFixed(1)} MB</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center h-full text-slate-500 bg-slate-950/20">
-                                <div className="text-center">
-                                    <div className="w-20 h-20 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-800">
-                                        <Mail className="w-10 h-10 opacity-20" />
-                                    </div>
-                                    <h3 className="text-xl font-medium text-slate-400 mb-2">Select an email to inspect</h3>
-                                    <p className="text-sm text-slate-600 max-w-xs mx-auto">
-                                        Review communications carefully. Identify potential security threats to generate the system key.
-                                    </p>
-                                </div>
+                {/* Legitimate Zone */}
+                <div
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'safe')}
+                    className={`rounded-xl border-2 p-4 flex flex-col transition-all ${isChecking ? 'opacity-50' : ''} bg-emerald-950/10 border-emerald-900/30 hover:bg-emerald-950/20 hover:border-emerald-500/50`}
+                >
+                    <h3 className="text-emerald-400 font-bold uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-emerald-900/30 pb-2">
+                        <CheckCircle2 className="w-5 h-5" /> Legitimate / Safe ({safeBox.length})
+                    </h3>
+                    <div className="flex-1 space-y-3 overflow-y-auto max-h-[400px] custom-scrollbar p-1">
+                        {safeBox.map(email => <EmailCard key={email.id} email={email} />)}
+                        {safeBox.length === 0 && (
+                            <div className="h-32 flex items-center justify-center text-emerald-900/40 text-sm font-bold border-2 border-dashed border-emerald-900/20 rounded-lg">
+                                DROP SAFE EMAILS HERE
                             </div>
                         )}
                     </div>
                 </div>
+
+                {/* Phishing Zone */}
+                <div
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'phishing')}
+                    className={`rounded-xl border-2 p-4 flex flex-col transition-all ${isChecking ? 'opacity-50' : ''} bg-red-950/10 border-red-900/30 hover:bg-red-950/20 hover:border-red-500/50`}
+                >
+                    <h3 className="text-red-400 font-bold uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-red-900/30 pb-2">
+                        <AlertTriangle className="w-5 h-5" /> Phishing / Malicious ({phishingBox.length})
+                    </h3>
+                    <div className="flex-1 space-y-3 overflow-y-auto max-h-[400px] custom-scrollbar p-1">
+                        {phishingBox.map(email => <EmailCard key={email.id} email={email} />)}
+                        {phishingBox.length === 0 && (
+                            <div className="h-32 flex items-center justify-center text-red-900/40 text-sm font-bold border-2 border-dashed border-red-900/20 rounded-lg">
+                                DROP THREATS HERE
+                            </div>
+                        )}
+                    </div>
+                </div>
+
             </div>
+
+            {/* Footer Action */}
+            <div className="flex justify-center p-4">
+                <Button
+                    size="lg"
+                    className={`w-full max-w-md font-bold text-lg tracking-widest shadow-2xl ${hasKey ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                    onClick={handleCheck}
+                    disabled={isChecking || hasKey}
+                >
+                    {isChecking ? "ANALYZING CLASSIFICATION..." : hasKey ? "ACCESS GRANTED" : "SUBMIT CLASSIFICATION"}
+                </Button>
+            </div>
+
         </div>
     );
 };

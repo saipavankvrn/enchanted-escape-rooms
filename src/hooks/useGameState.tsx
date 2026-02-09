@@ -10,6 +10,7 @@ interface GameState {
   levelTimestamps: Record<number, string>; // ISO strings from DB or Date objects
   subTasksCompleted: Record<number, string[]>;
   totalTimeSeconds: number | null;
+  hintsUsed: number;
   isCompleted: boolean;
 }
 
@@ -22,6 +23,7 @@ interface GameContextType {
   elapsedTime: number;
   isPlaying: boolean;
   applyPenalty: (seconds: number) => Promise<void>;
+  trackHintUsage: () => Promise<void>;
 }
 
 const levelSecrets: Record<number, string> = {
@@ -48,6 +50,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     levelTimestamps: {},
     subTasksCompleted: {},
     totalTimeSeconds: null,
+    hintsUsed: 0,
     isCompleted: false,
   });
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -99,6 +102,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           levelTimestamps: data.level_timestamps || {},
           subTasksCompleted: data.sub_tasks_completed || {},
           totalTimeSeconds: data.total_time_seconds,
+          hintsUsed: data.hints_used || 0,
           isCompleted: data.is_completed || false,
         });
 
@@ -186,6 +190,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     await saveGameState({ subTasksCompleted: newSubTasksCompleted });
   }, [gameState.subTasksCompleted, saveGameState]);
 
+  const trackHintUsage = useCallback(async () => {
+    const newHintsUsed = (gameState.hintsUsed || 0) + 1;
+    setGameState(prev => ({
+      ...prev,
+      hintsUsed: newHintsUsed
+    }));
+    await saveGameState({ hintsUsed: newHintsUsed });
+  }, [gameState.hintsUsed, saveGameState]);
+
   const completeLevel = useCallback(async (level: number, secretKey: string): Promise<boolean> => {
     // Check Secret Key for ALL levels now
     // For level 1, the next level is 2. The key checks current level completion?
@@ -259,6 +272,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         await saveGameState({
           completedLevels: newCompletedLevels,
           totalTimeSeconds: totalTime,
+          levelTimestamps: newTimestamps,
           isCompleted: true,
         });
         setElapsedTime(totalTime); // Force final time display
@@ -291,6 +305,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       levelTimestamps: {},
       subTasksCompleted: {},
       totalTimeSeconds: null,
+      hintsUsed: 0,
       isCompleted: false,
     });
     setElapsedTime(0);
@@ -317,6 +332,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       startTime: null as unknown as Date, // Hack to satisfy type if strict
       endTime: null as unknown as Date,
       totalTimeSeconds: null as unknown as number,
+      hintsUsed: 0,
       isCompleted: false,
     });
 
@@ -331,7 +347,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       resetGame,
       elapsedTime,
       isPlaying,
-      applyPenalty
+      applyPenalty,
+      trackHintUsage
     }}>
       {children}
     </GameContext.Provider>

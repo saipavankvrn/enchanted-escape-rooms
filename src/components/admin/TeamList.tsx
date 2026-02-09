@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Eye, Clock, Hash, Activity, Trophy, Play, Pause, AlertTriangle } from 'lucide-react';
+import { Eye, Clock, Hash, Activity, Trophy, Play, Pause, AlertTriangle, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LevelModal } from './LevelModal';
@@ -107,22 +107,60 @@ export const TeamList: React.FC<TeamListProps> = ({
         const headers = [
             'Rank',
             'Team Name',
-            'Level',
             'Status',
-            'Time Consumption (m:s)',
-            'Remaining Time (m:s)',
-            'Start Time'
+            'Current Level',
+            'Hints Used',
+            'Start Time',
+            'End Time',
+            'Total Time (m:s)',
+            'Level 1 Duration',
+            'Level 2 Duration',
+            'Level 3 Duration',
+            'Level 4 Duration',
+            'Level 5 Duration'
         ];
 
-        const rows = sortedDisplayTeams.map(t => [
-            t.rank,
-            `"${t.username.replace(/"/g, '""')}"`, // Escape quotes
-            t.current_level,
-            t.status,
-            formatTime(t.timeElapsed),
-            formatTime(t.remainingTime),
-            t.start_time ? new Date(t.start_time).toLocaleString() : '-'
-        ]);
+        const rows = sortedDisplayTeams.map(t => {
+            const getDuration = (level: number) => {
+                let start: number | null = null;
+                let end: number | null = null;
+
+                // Start Logic
+                if (level === 1) {
+                    start = t.start_time ? new Date(t.start_time).getTime() : null;
+                } else {
+                    const prevIso = t.level_timestamps?.[level - 1];
+                    start = prevIso ? new Date(prevIso).getTime() : null;
+                }
+
+                // End Logic
+                if (t.completed_levels.includes(level)) {
+                    const endIso = t.level_timestamps?.[level];
+                    end = endIso ? new Date(endIso).getTime() : null;
+                }
+
+                if (start && end) {
+                    return formatTime((end - start) / 1000);
+                }
+                return '-';
+            };
+
+            return [
+                t.rank,
+                `"${t.username.replace(/"/g, '""')}"`,
+                t.status,
+                t.current_level,
+                t.hints_used || 0,
+                t.start_time ? new Date(t.start_time).toLocaleString() : '-',
+                t.end_time ? new Date(t.end_time).toLocaleString() : '-',
+                t.is_completed ? formatTime(t.total_time_seconds || 0) : '-',
+                getDuration(1),
+                getDuration(2),
+                getDuration(3),
+                getDuration(4),
+                getDuration(5)
+            ];
+        });
 
         const csvContent = [
             headers.join(','),
@@ -163,6 +201,9 @@ export const TeamList: React.FC<TeamListProps> = ({
                             <th className="p-4 cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('remainingTime')}>
                                 <div className="flex items-center gap-2"><Clock className="w-4 h-4" /> Time</div>
                             </th>
+                            <th className="p-4 cursor-pointer hover:text-white transition-colors" onClick={() => handleSort('hints_used')}>
+                                <div className="flex items-center gap-2"><Lightbulb className="w-4 h-4" /> Hints</div>
+                            </th>
                             <th className="p-4 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -189,6 +230,9 @@ export const TeamList: React.FC<TeamListProps> = ({
                                 <td className={`p-4 font-mono text-lg font-bold ${team.remainingTime < 300 && team.status === 'Active' ? 'text-destructive animate-pulse' : 'text-success'
                                     }`}>
                                     {team.is_completed ? formatTime(team.total_time_seconds || 0) : formatTime(team.remainingTime)}
+                                </td>
+                                <td className="p-4 font-mono text-center text-slate-400">
+                                    {team.hints_used || 0}
                                 </td>
                                 <td className="p-4 text-right">
                                     <div className="flex justify-end items-center gap-2 transition-opacity">

@@ -32,7 +32,8 @@ router.get('/state', auth, async (req, res) => {
             end_time: user.endTime,
             level_timestamps: user.levelTimestamps || {},
             total_time_seconds: user.totalTimeSeconds,
-            is_completed: user.isCompleted
+            is_completed: user.isCompleted,
+            hints_used: user.hintsUsed
         });
     } catch (error) {
         console.error('Get game state error:', error);
@@ -63,6 +64,7 @@ router.post('/save', auth, async (req, res) => {
         if (subTasksCompleted !== undefined) updateData.subTasksCompleted = subTasksCompleted;
         if (totalTimeSeconds !== undefined) updateData.totalTimeSeconds = totalTimeSeconds;
         if (isCompleted !== undefined) updateData.isCompleted = isCompleted;
+        if (req.body.hintsUsed !== undefined) updateData.hintsUsed = req.body.hintsUsed;
 
         const user = await User.findByIdAndUpdate(
             req.userId,
@@ -87,6 +89,8 @@ router.post('/save', auth, async (req, res) => {
                 is_completed: user.isCompleted,
                 total_time_seconds: user.totalTimeSeconds,
                 end_time: user.endTime,
+                level_timestamps: user.levelTimestamps,
+                hints_used: user.hintsUsed,
                 username: user.username
                 // Add other fields if needed
             }

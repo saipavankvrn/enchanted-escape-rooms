@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useGameState } from '@/hooks/useGameState';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 import SecretKeyInput from './SecretKeyInput';
@@ -19,10 +20,11 @@ interface LevelPuzzleProps {
 const puzzles = [
   {
     title: "The Whispering Porch",
-    description: "You have breached the secure perimeter. A ransomware payload is hidden within the corporate inbox. You must identify, scan, and neutralize the threat to generate the access key.",
-    hint: "Pay attention to file extensions. Not everything is what it seems.",
+    description: "A wave of emails has flooded the corporate inbox. You must classify 7 suspicious emails into 'Legitimate' or 'Phishing' folders. Correctly identifying all threats will generate the access key.",
+    hint: "Check the sender's domain (e.g., 'micros0ft' instead of 'microsoft'), urgent language, and suspicious links.",
     action: "Begin Analysis",
-    secretHint: "The scanner will reveal the truth.",
+    secretHint: "To unmask the impostors, look for the 'Three Traps': a number hiding as a letter, a personal address for professional business, and a file that wants to 'run' instead of 'read'.",
+    penalty: 60,
   },
   {
     title: "The Hall of Mirrors",
@@ -57,6 +59,7 @@ const puzzles = [
 ];
 
 const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzleProps) => {
+  const { trackHintUsage } = useGameState();
   const [showHint, setShowHint] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const puzzle = puzzles[level - 1];
@@ -184,9 +187,11 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzle
                 if (confirm(`Warning: This hint costs ${puzzle.penalty / 60} minute(s) penalty. Proceed?`)) {
                   onPenalty(puzzle.penalty);
                   setShowHint(true);
+                  trackHintUsage();
                 }
               } else {
                 setShowHint(true);
+                trackHintUsage();
               }
             }}
             variant="ghost"

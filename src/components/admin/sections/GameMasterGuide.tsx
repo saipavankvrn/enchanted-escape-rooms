@@ -17,10 +17,10 @@ const LEVEL_DATA = [
         theme: "Advanced Phishing Detection",
         key: "LEVEL-1-COMPLETE",
         tasks: [
-            { name: "Threat Identification", solution: "Search 30 emails. Locate 'Vulnerability Assessment' / 'Pen-Test' email (24th Email).", fragment: "Threat ID" },
-            { name: "Payload Analysis", solution: "Find attachment with double extension (.pdf.exe). Click 'ANALYZE THREAT'.", fragment: "LEVEL-1-COMPLETE" }
+            { name: "Phishing Classification", solution: "Drag 7 emails to correct folders. 3 Legitimate (HR, Payroll, Sarah), 4 Phishing (IT, CEO, Amazon, Admin).", fragment: "Threat ID" },
+            { name: "Verification", solution: "Click 'SUBMIT CLASSIFICATION'. System checks if placements align with hidden 'isMalware' flags.", fragment: "LEVEL-1-COMPLETE" }
         ],
-        tools: ["Secure Inbox (30 Emails)", "Threat Analyzer Module"]
+        tools: ["Drag & Drop Interface", "Email Analyzer"]
     },
     {
         level: 2,
