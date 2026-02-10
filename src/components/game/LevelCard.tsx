@@ -12,16 +12,16 @@ interface LevelCardProps {
 const levelNames = [
   'The Whispering Porch',
   'The Hall of Mirrors',
+  'The Cold Kitchen',
   'The Cursed Library',
-  'Cold Kitchen',
   'The Shadow Heart',
 ];
 
 const levelDescriptions = [
   'Identify and neutralize the malware threat.',
   'Find the truth amidst the reflections.',
-  'Bypass the vault security with SQL injection.',
   'Decrypt the enigma code.',
+  'Bypass the vault security with SQL injection.',
   'Execute the final override command.',
 ];
 

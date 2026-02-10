@@ -28,11 +28,18 @@ const puzzles = [
   },
   {
     title: "The Hall of Mirrors",
-    description: "Airports are global hubs where cultures intersect. A fugitive signal was intercepted from an undisclosed terminal. Analyze the footage to pinpoint the exact location and time.",
-    hint: "The city of beauty",
-    action: "Begin Analysis",
-    secretHint: "Designed by Le Corbusier. It serves as the capital of two states.",
+    description: "This is a Cold Case investigation. The answers are not hidden in the source code—they are hidden in logic. Analyze 5 mirrors, connect the contradictions, and deduce the truth. You are not a hacker here; you are a detective.",
+    hint: "Use the 'Sherlock Hint' system if you get stuck. It costs time but provides a leading thought.",
+    action: "Enter the Hall of Mirrors",
+    secretHint: "1. 60m overlap. 2. 6h time difference. 3. Windows OS. 4. Mirror B is the trap. 5. 120km/h.",
     penalty: 60,
+  },
+  {
+    title: "The Cold Kitchen",
+    description: "Two encrypted messages block your path. A rogue intern and an overconfident developer have left behind puzzles they claim are 'unbreakable'. Decode them both to proceed.",
+    hint: "For the first, try substituting letters. For the second, reverse the layers of encoding.",
+    action: "Access Decryption Module",
+    secretHint: "P1: ROT13 -> Base64. P2: URL Decode -> Base64 -> Reverse.",
   },
   {
     title: "The Cursed Library",
@@ -40,13 +47,6 @@ const puzzles = [
     hint: "A hunter doesn't bring their own bait; they find it in the environment. Scrape the 'About Us' page to find the words that will unlock the gate.",
     action: "Launch Terminal",
     secretHint: "Use 'cewl' to gather words. Use 'sed' to append '2026' to them. Use 'hydra' to attack.",
-  },
-  {
-    title: "The Enigma Vault",
-    description: "Two encrypted messages block your path. A rogue intern and an overconfident developer have left behind puzzles they claim are 'unbreakable'. Decode them both to proceed.",
-    hint: "For the first, try substituting letters. For the second, reverse the layers of encoding.",
-    action: "Access Decryption Module",
-    secretHint: "P1: ROT13 -> Base64. P2: URL Decode -> Base64 -> Reverse.",
   },
   {
     title: "The Shadow Heart",
@@ -126,7 +126,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzle
           </>
         ) : level === 2 ? (
           <>
-            <HallOfMirrors />
+            <HallOfMirrors onPenalty={onPenalty} />
             {showKeyInput && (
               <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <p className="text-center text-sm text-muted-foreground mb-4">
@@ -138,11 +138,11 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzle
           </>
         ) : level === 3 ? (
           <>
-            <CursedLibrary />
+            <EnigmaVault />
             {showKeyInput && (
               <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <p className="text-center text-sm text-muted-foreground mb-4">
-                  SSH SESSION ESTABLISHED. FLAG CAPTURED.
+                  DATABASE BREACHED. ADMIN ACCESS GRANTED.
                 </p>
                 <SecretKeyInput onSubmit={handleKeySubmit} />
               </div>
@@ -150,11 +150,11 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzle
           </>
         ) : level === 4 ? (
           <>
-            <EnigmaVault />
+            <CursedLibrary />
             {showKeyInput && (
               <div className="mt-8 pt-8 border-t border-primary/20 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <p className="text-center text-sm text-muted-foreground mb-4">
-                  DATABASE BREACHED. ADMIN ACCESS GRANTED.
+                  SSH SESSION ESTABLISHED. FLAG CAPTURED.
                 </p>
                 <SecretKeyInput onSubmit={handleKeySubmit} />
               </div>
@@ -180,7 +180,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzle
           </div>
         )}
 
-        {!showHint && puzzle.hint && level !== 4 && level !== 5 && (
+        {!showHint && puzzle.hint && level !== 2 && level !== 3 && level !== 5 && (
           <Button
             onClick={() => {
               if (puzzle.penalty && onPenalty) {

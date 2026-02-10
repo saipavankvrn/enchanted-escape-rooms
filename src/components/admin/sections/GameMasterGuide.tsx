@@ -30,21 +30,42 @@ const LEVEL_DATA = [
     {
         level: 2,
         title: "The Hall of Mirrors",
-        theme: "Video OSINT Analysis",
-        key: "SHADOW",
+        theme: "Logic & Deduction (Cold Case)",
+        key: "SPOOFED_2026",
         tasks: [
-            { name: "Location", solution: "Analyze video. Identify 'Chandigarh' connection (Le Corbusier).", fragment: "SHA" },
-            { name: "Timestamp", solution: "1 Minute Penalty for hint usage.", fragment: "DOW" }
+            { name: "1. Alibi Intersection", solution: "60 minutes (Overlap Duration)", fragment: "SPO" },
+            { name: "2. Reflection Paradox", solution: "6 hours (Time Difference)", fragment: "OF" },
+            { name: "3. Network Ghost", solution: "Windows OS (Device Mismatch)", fragment: "ED_" },
+            { name: "4. Password Trap", solution: "Mirror B", fragment: "20" },
+            { name: "5. Geographic Impossible", solution: "120km/h (Required Speed)", fragment: "26" }
         ],
-        tools: ["Video Player", "Flight Tracker/Map Knowledge"],
+        tools: ["Logic", "Calculator", "Attention to Detail"],
         hints: [
-            "Look for landmarks in the background. The 'Open Hand Monument' is key.",
-            "The architecture style is distinctively 'Le Corbusier'.",
-            "The city is known as 'The City Beautiful'."
+            "Task 1: Calculate the duration of the overlap.",
+            "Task 2: Phone time minus Mirror time.",
+            "Task 3: Which OS does not match the registry?",
+            "Task 4: Check the ID badge logo.",
+            "Task 5: Speed = Distance / Time."
         ]
     },
     {
         level: 3,
+        title: "The Cold Kitchen",
+        theme: "Cryptography",
+        key: "TH3_M4SK_0F_Z0RR0",
+        tasks: [
+            { name: "Rogue Intern", solution: "ROT13 -> Base64 Decode", fragment: "Beat_me_if_Possible!!!!" },
+            { name: "Stacked Cipher", solution: "Base64 Decode -> Reverse String", fragment: "Veltech.Welcomes_You-All" }
+        ],
+        tools: ["CyberChef", "Vigenere Cipher Decoder", "Base64 Decoder"],
+        hints: [
+            "Layer 1: 'My mother used to make roti using base on a roti board' -> ROT13 + Base64.",
+            "Layer 2: 'The base needs to be reversed' -> Base64 Decode then Reverse string.",
+            "The final key is displayed after solving Layer 2."
+        ]
+    },
+    {
+        level: 4,
         title: "The Cursed Library",
         theme: "SQL Injection / Brute Force",
         key: "DICT_ATTACK_MASTER",
@@ -57,22 +78,6 @@ const LEVEL_DATA = [
             "Harvest words from the 'About Us' page using 'cewl'.",
             "The password policy requires the current year (2026) appended to words.",
             "Use 'sed' to modify your wordlist before running 'hydra'."
-        ]
-    },
-    {
-        level: 4,
-        title: "Cold Kitchen",
-        theme: "Cryptography",
-        key: "TH3_M4SK_0F_Z0RR0",
-        tasks: [
-            { name: "Rogue Intern", solution: "ROT13 -> Base64 Decode", fragment: "Beat_me_if_Possible!!!!" },
-            { name: "Stacked Cipher", solution: "Base64 Decode -> Reverse String", fragment: "Veltech.Welcomes_You-All" }
-        ],
-        tools: ["CyberChef", "Vigenere Cipher Decoder", "Base64 Decoder"],
-        hints: [
-            "Layer 1: 'My mother used to make roti using base on a roti board' -> ROT13 + Base64.",
-            "Layer 2: 'The base needs to be reversed' -> Base64 Decode then Reverse string.",
-            "The final key is displayed after solving Layer 2."
         ]
     },
     {
