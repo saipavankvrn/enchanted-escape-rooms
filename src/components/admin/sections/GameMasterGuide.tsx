@@ -61,7 +61,7 @@ const LEVEL_DATA = [
     },
     {
         level: 4,
-        title: "The Enigma Vault",
+        title: "Cold Kitchen",
         theme: "Cryptography",
         key: "TH3_M4SK_0F_Z0RR0",
         tasks: [

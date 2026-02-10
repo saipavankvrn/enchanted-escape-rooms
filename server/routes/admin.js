@@ -103,15 +103,21 @@ router.post('/players/:id/time', adminAuth, async (req, res) => {
             user.startTime = new Date();
         }
 
-        const adjustment = action === 'add' ? seconds * 1000 : -(seconds * 1000);
-        // Add time = give more time = push start time forward (make it later)?
-        // Wait. Limit is fixed. Time Remaining = Limit - (Now - Start).
-        // To increase Remaining, we must decrease (Now - Start).
-        // To decrease (Now - Start), we must INCREASE Start.
-        // So Add Time = StartTime + adjustment.
-        // Deduct Time (penalty) = StartTime - adjustment.
+        // Logic:
+        // Remaining Time = Limit - (Now - StartTime)
+        // To INCREASE Remaining Time (Add Time), we need to DECREASE (Now - StartTime).
+        // To decrease the difference, we must INCREASE StartTime (push it forward in time).
+        // To DECREASE Remaining Time (Penalty), we must DECREASE StartTime (push it back in time).
 
-        user.startTime = new Date(user.startTime.getTime() + adjustment);
+        const ms = seconds * 1000;
+
+        if (action === 'add') {
+            // Give 5 mins -> Move start time 5 mins LATER
+            user.startTime = new Date(user.startTime.getTime() + ms);
+        } else {
+            // Penalty 5 mins -> Move start time 5 mins EARLIER
+            user.startTime = new Date(user.startTime.getTime() - ms);
+        }
 
         await user.save();
 

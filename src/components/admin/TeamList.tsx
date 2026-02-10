@@ -52,8 +52,15 @@ export const TeamList: React.FC<TeamListProps> = ({
             const start = new Date(team.start_time).getTime();
             const now = currentTime; // Use live state
             const elapsedRaw = (now - start) / 1000;
-            timeElapsed = Math.max(0, elapsedRaw);
-            remainingTime = Math.max(0, 3000 - elapsedRaw);
+
+            // Cap elapsed time at max limit if game is not completed but time is up
+            if (elapsedRaw > 3000 && !team.is_completed) {
+                timeElapsed = 3000;
+                remainingTime = 0;
+            } else {
+                timeElapsed = Math.max(0, elapsedRaw);
+                remainingTime = Math.max(0, 3000 - elapsedRaw);
+            }
         }
 
         return {
@@ -61,7 +68,7 @@ export const TeamList: React.FC<TeamListProps> = ({
             rank: 0, // Will compute later
             remainingTime,
             timeElapsed,
-            status: team.is_completed ? 'Completed' : (remainingTime > 0 ? 'Active' : 'Timed Out')
+            status: team.is_completed ? 'Completed' : (remainingTime <= 0 ? 'Timed Out' : 'Active')
         };
     });
 
