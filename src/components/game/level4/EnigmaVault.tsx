@@ -1,16 +1,3 @@
-> vite_react_shadcn_ts@0.0.0 start: server
-    > node server / index.js
-
-    [dotenv@17.2.4] injecting env(2) from.env-- tip: ⚙️  enable debug logging with { debbug: true }
-Server running on port 5000
-MongoDB connection error: Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.zbdu2y4.mongodb.net
-    at QueryReqWrap.onresolve[as oncomplete](node: internal/dns/promises: 294: 17) {
-    errno: undefined,
-        code: 'ECONNREFUSED',
-            syscall: 'querySrv',
-                hostname: '_mongodb._tcp.cluster0.zbdu2y4.mongodb.net'
-}
-Client connected: ohdFQnU7jz9vzllSAAAB
 import { useState } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { toast } from 'sonner';
