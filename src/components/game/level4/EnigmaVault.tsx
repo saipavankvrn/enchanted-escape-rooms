@@ -1,88 +1,210 @@
+> vite_react_shadcn_ts@0.0.0 start: server
+    > node server / index.js
+
+    [dotenv@17.2.4] injecting env(2) from.env-- tip: ⚙️  enable debug logging with { debbug: true }
+Server running on port 5000
+MongoDB connection error: Error: querySrv ECONNREFUSED _mongodb._tcp.cluster0.zbdu2y4.mongodb.net
+    at QueryReqWrap.onresolve[as oncomplete](node: internal/dns/promises: 294: 17) {
+    errno: undefined,
+        code: 'ECONNREFUSED',
+            syscall: 'querySrv',
+                hostname: '_mongodb._tcp.cluster0.zbdu2y4.mongodb.net'
+}
+Client connected: ohdFQnU7jz9vzllSAAAB
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Lock, FileKey, AlertTriangle, EyeOff } from 'lucide-react';
 import { useGameState } from '@/hooks/useGameState';
 import { toast } from 'sonner';
+import { Lock, Unlock, Terminal, ShieldAlert } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const EnigmaVault = () => {
-    const { applyPenalty } = useGameState();
-    const [hintRevealed, setHintRevealed] = useState(false);
+    const { completeSubTask, gameState, applyPenalty } = useGameState();
+    const collectedBytes = gameState.subTasksCompleted[4] || [];
 
-    const handleRequestHint = () => {
-        if (confirm("WARNING: Requesting this hint will deduct 2 minutes from your remaining time. Proceed?")) {
+    // Task 1 State
+    const [answer1, setAnswer1] = useState('');
+    const [solved1, setSolved1] = useState(collectedBytes.includes('byte_1'));
+
+    // Task 2 State
+    const [answer2, setAnswer2] = useState('');
+    const [solved2, setSolved2] = useState(collectedBytes.includes('byte_2'));
+
+    // Hint States
+    const [hints1Revealed, setHints1Revealed] = useState(false);
+    const [hints2Revealed, setHints2Revealed] = useState(false);
+
+    const revealHint1 = () => {
+        if (confirm("Revealing this hint will cost you 2 minutes. Proceed?")) {
             applyPenalty(120);
-            setHintRevealed(true);
-            toast.warning("Time Penalty Applied: -2 Minutes");
+            setHints1Revealed(true);
+        }
+    };
+
+    const revealHint2 = () => {
+        if (confirm("Revealing this hint will cost you 2 minutes. Proceed?")) {
+            applyPenalty(120);
+            setHints2Revealed(true);
+        }
+    };
+
+    const CHALLENGE_1_HASH = "Beat_me_if_Possible!!!!";
+    const CHALLENGE_2_HASH = "Veltech.Welcomes_You-All";
+
+    const handleSubmit1 = () => {
+        if (answer1.trim() === CHALLENGE_1_HASH) {
+            setSolved1(true);
+            completeSubTask(4, 'byte_1');
+            toast.success("Correct! The rogue intern's cipher is broken.");
+        } else {
+            toast.error("Incorrect. Try again.");
+        }
+    };
+
+    const handleSubmit2 = () => {
+        if (answer2.trim() === CHALLENGE_2_HASH) {
+            setSolved2(true);
+            completeSubTask(4, 'byte_2');
+            toast.success("Correct! The developer's layers are peeled.");
+        } else {
+            toast.error("Incorrect. Remember the order.");
         }
     };
 
     return (
-        <div className="w-full max-w-3xl mx-auto p-4 flex flex-col gap-8">
-            <div className="bg-slate-900/80 border border-primary/30 rounded-xl p-8 relative overflow-hidden backdrop-blur-sm shadow-[0_0_50px_rgba(139,92,246,0.1)]">
-                {/* Decorative Grid */}
-                <div className="absolute inset-0 cyber-grid opacity-10 pointer-events-none" />
+        <div className="w-full max-w-5xl mx-auto p-4 flex flex-col md:flex-row gap-6">
 
-                <div className="relative z-10 flex flex-col items-center text-center space-y-8">
-
-                    <div className="space-y-2">
-                        <Lock className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
-                        <h3 className="text-2xl font-display font-bold text-white tracking-wider">
-                            ENCRYPTED DATA FRAGMENT
-                        </h3>
-                        <p className="text-slate-400 max-w-md mx-auto">
-                            We have recovered a strange data string from a rogue server's temporary memory.
-                            Our tools are failing to decode it.
-                        </p>
-                    </div>
-
-                    <div className="w-full max-w-lg bg-black/60 border-2 border-primary/20 rounded-lg p-6 font-mono text-center relative group">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 px-3 text-xs text-primary uppercase tracking-widest border border-primary/20 rounded">
-                            The Artifact
-                        </div>
-                        <p className="text-2xl md:text-3xl text-white font-bold tracking-widest break-all">
-                            VRvgX000c2euTGZqLqBynyH=
-                        </p>
-                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                    </div>
-
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="bg-yellow-900/20 border border-yellow-500/30 px-6 py-4 rounded-lg flex items-center gap-3">
-                            <FileKey className="w-5 h-5 text-yellow-500" />
-                            <div className="text-left">
-                                <p className="text-xs text-yellow-500 uppercase tracking-wider font-bold">Sticky Note Found</p>
-                                <p className="text-xl font-mono text-white tracking-widest">"ALPHA"</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-4" />
-
-                    <div className="space-y-4">
-                        {!hintRevealed ? (
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                className="border-red-500/50 text-red-400 hover:bg-red-950/30 hover:border-red-500 group"
-                                onClick={handleRequestHint}
-                            >
-                                <EyeOff className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                                Decrypt Hint (-2:00 Penalty)
-                            </Button>
-                        ) : (
-                            <div className="animate-in fade-in zoom-in duration-500 bg-red-950/20 border border-red-500/40 rounded-lg p-6 max-w-md">
-                                <div className="flex items-center justify-center gap-2 mb-2">
-                                    <AlertTriangle className="w-5 h-5 text-red-500" />
-                                    <span className="text-red-500 font-bold uppercase tracking-widest text-sm">Hint Decrypted</span>
-                                </div>
-                                <p className="text-lg text-white font-handwriting italic">
-                                    "My mother use Vigenere while cooking!!!!"
-                                </p>
-                            </div>
-                        )}
-                    </div>
-
+            {/* Challenge 1: The Rogue Intern */}
+            <div className={`flex-1 border-2 rounded-xl p-6 relative overflow-hidden transition-all duration-500 ${solved1 ? 'border-green-500/50 bg-green-950/10' : 'border-red-500/30 bg-black'}`}>
+                <div className="absolute top-0 right-0 p-2 opacity-20">
+                    <ShieldAlert className={`w-24 h-24 ${solved1 ? 'text-green-500' : 'text-red-500'}`} />
                 </div>
+
+                <h3 className={`text-xl font-bold font-mono mb-2 ${solved1 ? 'text-green-400' : 'text-red-400'}`}>
+                    0x01: The Rogue Intern
+                </h3>
+                <p className="text-slate-400 text-sm mb-4">
+                    "I've created an 'unbreakable' encoding. Even beginners won't crack it. It mixes binary-safe formats with letter substitution."
+                </p>
+
+                <div className="bg-slate-900 border border-slate-700 p-4 rounded mb-6 font-mono text-center break-all text-yellow-500">
+                    DzIuqS9gMI9cMy9Do3AmnJWfMFRuVFR=
+                </div>
+
+                {!solved1 ? (
+                    <div className="space-y-4">
+                        <div className="bg-slate-800/50 p-3 rounded text-xs text-slate-400 space-y-2">
+                            {!hints1Revealed ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full border-dashed border-slate-600 text-slate-400 hover:text-white"
+                                    onClick={revealHint1}
+                                >
+                                    Reveal Hint (-2:00 Penalty)
+                                </Button>
+                            ) : (
+                                <div className="animate-in fade-in duration-500">
+                                    <p className="italic text-yellow-500">"My mother used to make roti using base on a roti board"</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-3 relative z-10">
+                            <input
+                                type="text"
+                                value={answer1}
+                                onChange={(e) => setAnswer1(e.target.value)}
+                                placeholder="Enter decrypted string..."
+                                className="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white focus:outline-none focus:border-red-500 font-mono"
+                            />
+                            <Button
+                                onClick={handleSubmit1}
+                                className="w-full bg-red-600 hover:bg-red-700 text-white font-mono"
+                            >
+                                <Lock className="w-4 h-4 mr-2" /> Decrypt Layer 1
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center text-green-400 font-mono font-bold animate-pulse">
+                        <Unlock className="w-5 h-5 mr-2" /> DECRYPTED
+                    </div>
+                )}
             </div>
+
+            {/* Challenge 2: The Lazy Developer */}
+            <div className={`flex-1 border-2 rounded-xl p-6 relative overflow-hidden transition-all duration-500 ${!solved1 ? 'opacity-50 grayscale pointer-events-none border-slate-800 bg-black' : solved2 ? 'border-green-500/50 bg-green-950/10' : 'border-blue-500/30 bg-black'}`}>
+                <div className="absolute top-0 right-0 p-2 opacity-20">
+                    <Terminal className={`w-24 h-24 ${solved2 ? 'text-green-500' : 'text-blue-500'}`} />
+                </div>
+
+                {!solved1 && (
+                    <div className="absolute inset-0 z-20 bg-black/80 flex flex-col items-center justify-center text-center p-6">
+                        <Lock className="w-12 h-12 text-slate-500 mb-4" />
+                        <h3 className="text-xl font-bold font-mono text-slate-400 mb-2">LOCKED</h3>
+                        <p className="text-slate-600 text-sm">Decrypt "The Rogue Intern" to access this layer.</p>
+                    </div>
+                )}
+
+                <h3 className={`text-xl font-bold font-mono mb-2 ${solved2 ? 'text-green-400' : 'text-blue-400'}`}>
+                    0x02: The Stacked Cipher
+                </h3>
+                <p className="text-slate-400 text-sm mb-4">
+                    "Encoding isn't encryption... but three times should be enough."
+                </p>
+
+                <div className="bg-slate-900 border border-slate-700 p-4 rounded mb-6 font-mono text-center break-all text-cyan-500">
+                    {solved1 ? "bGxBLXVvWV9zZW1vY2xlVy5oY2V0bGVW" : "••••••••••••••••••••••••••••••••••••••••"}
+                </div>
+
+                {solved1 && !solved2 ? (
+                    <div className="space-y-4">
+                        <div className="bg-slate-800/50 p-3 rounded text-xs text-slate-400 space-y-2">
+                            {!hints2Revealed ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full border-dashed border-slate-600 text-slate-400 hover:text-white"
+                                    onClick={revealHint2}
+                                >
+                                    Reveal Hint (-2:00 Penalty)
+                                </Button>
+                            ) : (
+                                <div className="animate-in fade-in duration-500">
+                                    <p className="italic text-cyan-500">"The base needs to be reversed"</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-3 relative z-10">
+                            <input
+                                type="text"
+                                value={answer2}
+                                onChange={(e) => setAnswer2(e.target.value)}
+                                placeholder="Enter decoded string..."
+                                className="w-full bg-slate-900 border border-slate-700 p-2 rounded text-white focus:outline-none focus:border-blue-500 font-mono"
+                            />
+                            <Button
+                                onClick={handleSubmit2}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-mono"
+                            >
+                                <Lock className="w-4 h-4 mr-2" /> Decrypt Layer 2
+                            </Button>
+                        </div>
+                    </div>
+                ) : solved2 ? (
+                    <div className="space-y-4 animate-pulse">
+                        <div className="flex items-center text-green-400 font-mono font-bold">
+                            <Unlock className="w-5 h-5 mr-2" /> DECRYPTED
+                        </div>
+                        <div className="p-3 bg-green-950/30 border border-green-500/50 rounded text-center">
+                            <span className="text-xs uppercase text-green-500 block mb-1">System Key Generated</span>
+                            <span className="font-mono text-xl font-bold text-white tracking-widest">TH3_M4SK_0F_Z0RR0</span>
+                        </div>
+                    </div>
+                ) : null}
+            </div>
+
         </div>
     );
 };

@@ -132,21 +132,27 @@ router.post('/players/:id/time', adminAuth, async (req, res) => {
 router.post('/players/:id/reset-timer', adminAuth, async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(`[ADMIN] Resetting timer for user: ${id}`);
 
         const user = await User.findById(id);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         // Reset Timer: Set start time to NOW. Clear totalTime.
-        // This gives them a full 50 minutes starting from this moment.
-        // It does NOT reset their level progress unless they explicitly ask for that too.
         user.startTime = new Date();
         user.endTime = null;
         user.totalTimeSeconds = null;
-        user.isCompleted = false; // If they were completed, they are active again with new timer?
-        // Maybe check if completed? If completed, maybe don't reset timer unless we also reset level?
-        // User asked for "reset timer", usually to give another chance.
+        user.levelTimestamps = {}; // Clear level times
+        user.subTasksCompleted = {}; // Clear subtasks
+        user.hintsUsed = 0; // Reset hints count if desired, makes sense for a fresh start
+
+        // Option: If we are resetting the timer, maybe we should NOT reset the isCompleted flag if they already won?
+        // But usually "Timer Reset" implies giving them another chance to finish within time.
+        // If they completed it, resetting timer is weird unless they want to beat their time.
+        // Let's set isCompleted to false to allow them to "play" again.
+        user.isCompleted = false;
 
         await user.save();
+        console.log(`[ADMIN] Timer reset successfully for user: ${id}`);
 
         const io = req.app.get('io');
         if (io) {
@@ -164,9 +170,14 @@ router.post('/players/:id/reset-timer', adminAuth, async (req, res) => {
 router.delete('/players/:id', adminAuth, async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(`[ADMIN] Deleting user: ${id}`);
 
         const user = await User.findByIdAndDelete(id);
-        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if (!user) {
+            console.log(`[ADMIN] User not found for deletion: ${id}`);
+            return res.status(404).json({ error: 'User not found' });
+        }
 
         const io = req.app.get('io');
         if (io) {
@@ -174,6 +185,7 @@ router.delete('/players/:id', adminAuth, async (req, res) => {
             io.emit('postgres_changes', { event: 'DELETE', payload: { _id: id } });
         }
 
+        console.log(`[ADMIN] User deleted successfully: ${id}`);
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         console.error('Delete user error:', error);

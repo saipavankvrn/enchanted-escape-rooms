@@ -274,6 +274,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           totalTimeSeconds: totalTime,
           levelTimestamps: newTimestamps,
           isCompleted: true,
+          endTime: now,
         });
         setElapsedTime(totalTime); // Force final time display
       } else {

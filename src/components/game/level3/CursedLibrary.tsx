@@ -1,37 +1,40 @@
 import { useState, useRef, useEffect } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { toast } from 'sonner';
-import { Terminal, Globe, Lock, Cpu, Server, FileText } from 'lucide-react';
+import { Globe } from 'lucide-react';
 
 const CursedLibrary = () => {
     const { gameState, completeSubTask } = useGameState();
-    const [terminalOutput, setTerminalOutput] = useState<{ text: string; type: 'info' | 'success' | 'error' | 'default' }[]>([
-        { text: "KALI LINUX - PENTEST STATION", type: 'default' },
-        { text: "IP: 10.10.10.99 | Target: 10.10.10.55 (Omega Corp)", type: 'default' },
+    const [terminalOutput, setTerminalOutput] = useState<{ text: string; type: 'info' | 'success' | 'error' | 'default' | 'system' }[]>([
+        { text: "KALI LINUX - PENTEST STATION", type: 'system' },
+        { text: "CONNECTED TO: OMEGA CORP INTERNAL NETWORK", type: 'default' },
+        { text: "> [LIBRARIAN]: Access denied. The gate is locked.", type: 'info' },
+        { text: "> [LIBRARIAN]: A hunter doesn't bring their own bait; they find it in the environment.", type: 'info' },
+        { text: "> [SUGGESTION]: Scrape the 'About Us' page to find the words... and maybe the year.", type: 'info' },
         { text: "---------------------------------------------------", type: 'default' },
-        { text: "MISSION: Gain SSH access. Standard wordlists have failed.", type: 'info' },
-        { text: "HINT: Generate a custom wordlist based on the target's website content.", type: 'info' },
-        { text: "---------------------------------------------------", type: 'default' },
-        { text: "Available Tools: nmap, cewl, cat, hydra, clear, help", type: 'default' },
+        { text: "Available Tools: nmap, cewl, cat, sed, hydra, clear, help", type: 'default' },
         { text: "", type: 'default' },
     ]);
     const [command, setCommand] = useState('');
+
+    // File system state
     const [fileSystem, setFileSystem] = useState<Record<string, string>>({
-        "readme.txt": "Target IP: 10.10.10.55\nGoal: SSH Access"
+        "readme.txt": "Target IP: 10.10.10.55\nGoal: SSH Access via 'admin' user.\nHint: Harvest the site’s words, append the current year (2026), and unleash the beast to find the one true key."
     });
+
     const terminalRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     const collectedBytes = gameState.subTasksCompleted[3] || [];
     const hasKey = collectedBytes.includes('byte_1');
 
-    // Site Words for cewl
-    const SITE_WORDS = [
-        "Omega", "Corp", "Building", "Future", "Today", "2019", "Eleanor", "Vance",
-        "Synergy", "Innovation", "Seattle", "2026", "Strategic", "Vision", "Project",
-        "Titan", "CyberBlade", "Excellence", "admin", "Portal"
+    // Base words found on the site
+    const SITE_WORDS_BASE = [
+        "Omega", "Corp", "Titan", "Eleanor", "Research", "Seattle", "Vision", "Future", "Synergy"
     ];
-    const PASSWORD = "admin";
+
+    // The correct password logic: A word (Titan) + Year (2026)
+    const TARGET_PASSWORD = "Titan2026";
 
     useEffect(() => {
         if (terminalRef.current) {
@@ -39,7 +42,7 @@ const CursedLibrary = () => {
         }
     }, [terminalOutput]);
 
-    const print = (text: string, type: 'info' | 'success' | 'error' | 'default' = 'default') => {
+    const print = (text: string, type: 'info' | 'success' | 'error' | 'default' | 'system' = 'default') => {
         setTerminalOutput(prev => [...prev, { text, type }]);
     };
 
@@ -51,21 +54,23 @@ const CursedLibrary = () => {
 
             if (!raw) return;
 
+            // Simple command parsing
+            // We need to support checks for specific flags and file redirection >
             const parts = raw.split(' ');
             const cmd = parts[0];
-            const args = parts.slice(1);
 
             // Simulation Delay
             await new Promise(r => setTimeout(r, 200));
 
             if (cmd === 'help') {
                 print("Available Commands:");
-                print("  nmap <ip>              - Scan network ports");
-                print("  cewl <url> -w <file>   - Spider a site and create a wordlist");
-                print("  hydra -l <user> -P <file> <ip>  - Brute force login");
-                print("  ls                     - List files");
-                print("  cat <file>             - Read file");
-                print("  clear                  - Clear terminal");
+                print("  nmap <ip>                        - Scan network ports");
+                print("  cewl <url> -w <file>             - Spider a site and create a wordlist");
+                print("  sed 's/$/<suffix>/' <in> > <out> - Append text to lines");
+                print("  hydra -l <user> -P <file> <ip>   - Brute force login");
+                print("  ls                               - List files");
+                print("  cat <file>                       - Read file");
+                print("  clear                            - Clear terminal");
             }
             else if (cmd === 'clear') {
                 setTerminalOutput([]);
@@ -74,34 +79,35 @@ const CursedLibrary = () => {
                 print(Object.keys(fileSystem).join("  "));
             }
             else if (cmd === 'cat') {
-                if (!args[0]) print("Usage: cat <filename>", "error");
-                else if (fileSystem[args[0]]) print(fileSystem[args[0]]);
-                else print(`cat: ${args[0]}: No such file or directory`, "error");
+                if (!parts[1]) print("Usage: cat <filename>", "error");
+                else if (fileSystem[parts[1]]) print(fileSystem[parts[1]]);
+                else print(`cat: ${parts[1]}: No such file or directory`, "error");
             }
             else if (cmd === 'nmap') {
-                if (!args[0]) print("Usage: nmap <target_ip>", "error");
+                if (!parts[1]) print("Usage: nmap <target_ip>", "error");
                 else {
-                    print(`Starting Nmap 7.92 scan against ${args[0]}...`);
+                    print(`Starting Nmap 7.92 scan against ${parts[1]}...`);
                     await new Promise(r => setTimeout(r, 1000));
                     print(`Host is up (0.002s latency).`);
                     print(`PORT   STATE SERVICE`);
                     print(`22/tcp OPEN  ssh`);
                     print(`80/tcp OPEN  http`);
-                    print(`443/tcp OPEN https`);
-                    print('5000/tcp OPEN admin-portal');
-                    print('8080/tcp OPEN tomcat');
-                    print('9000/tcp OPEN jboss');
-                    print('10000/tcp OPEN jenkins');
                 }
             }
             else if (cmd === 'cewl') {
-                // cewl <url> -w <file>
-                if (args.length < 3 || args[1] !== '-w') {
+                // cewl https://omega-corp.internal/about-us -w words.txt
+                const wIndex = parts.indexOf('-w');
+                if (parts.length < 4 || wIndex === -1 || wIndex === parts.length - 1) {
                     print("Usage: cewl <url> -w <output_file>", "error");
                     return;
                 }
-                const url = args[0];
-                const filename = args[2];
+                const url = parts[1];
+                const filename = parts[wIndex + 1];
+
+                if (!url.includes('omega-corp')) {
+                    print("Error: Could not resolve host. Are you targeting the right domain?", "error");
+                    return;
+                }
 
                 print(`CeWL 5.4.3 (Custom Word List generator)`);
                 print(`Target: ${url}`);
@@ -109,54 +115,116 @@ const CursedLibrary = () => {
 
                 await new Promise(r => setTimeout(r, 1500));
                 print(`[+] Parsing text...`);
-                print(`[+] Found ${SITE_WORDS.length} unique words.`);
+                print(`[+] Found ${SITE_WORDS_BASE.length} unique words.`);
                 print(`[+] Writing to file: ${filename}`, "success");
 
-                setFileSystem(prev => ({ ...prev, [filename]: SITE_WORDS.join("\n") }));
+                setFileSystem(prev => ({ ...prev, [filename]: SITE_WORDS_BASE.join("\n") }));
+            }
+            else if (cmd === 'sed') {
+                // sed 's/$/2026/' words.txt > final_list.txt
+                // This is a bit complex to parse perfectly, so we'll look for key signature
+                const fullCmd = raw;
+                if (!fullCmd.includes("s/$/") || !fullCmd.includes(">")) {
+                    print("Usage: sed 's/$/SUFFIX/' input_file > output_file", "error");
+                    print("Hint: You want to append the year (2026) to every word.", "info");
+                    return;
+                }
+
+                // parse suffix
+                // expecting 's/$/2026/'
+                const match = fullCmd.match(/s\/\$\/(.*?)\//);
+                if (!match) {
+                    print("sed: parsing error. Ensure format is 's/$/SUFFIX/'", "error");
+                    return;
+                }
+                const suffix = match[1];
+
+                // parse input and output files
+                // simple split by >
+                const splitByRedirect = fullCmd.split('>');
+                if (splitByRedirect.length !== 2) {
+                    print("sed: missing output redirection >", "error");
+                    return;
+                }
+
+                const leftPart = splitByRedirect[0].trim().split(' ');
+                const inputFile = leftPart[leftPart.length - 1]; // last word before >
+                const outputFile = splitByRedirect[1].trim();
+
+                if (!fileSystem[inputFile]) {
+                    print(`sed: cannot read ${inputFile}: No such file`, "error");
+                    return;
+                }
+
+                const content = fileSystem[inputFile];
+                const lines = content.split('\n');
+                const newContent = lines.map(line => line + suffix).join('\n');
+
+                setFileSystem(prev => ({ ...prev, [outputFile]: newContent }));
+                print(""); // empty line
             }
             else if (cmd === 'hydra') {
-                // hydra -l admin -P words.txt 10.10.10.55
-                if (args.length < 5 || args[0] !== '-l' || args[2] !== '-P') {
+                // hydra -l admin -P final_list.txt 10.10.10.55
+                if (parts.length < 5) {
                     print("Usage: hydra -l <user> -P <wordlist> <target_ip>", "error");
                     return;
                 }
-                const wordlist = args[3];
-                const target = args[4];
-                const user = args[1];
 
-                if (!fileSystem[wordlist]) {
-                    print(`Error: Wordlist '${wordlist}' not found. Did you run cewl?`, "error");
+                const lIndex = parts.indexOf('-l');
+                const pIndex = parts.indexOf('-P');
+
+                if (lIndex === -1 || pIndex === -1) {
+                    print("Missing -l or -P arguments.", "error");
                     return;
                 }
 
+                const user = parts[lIndex + 1];
+                const wordlist = parts[pIndex + 1];
+                const target = parts[parts.length - 1]; // assume last arg is IP
+
+                if (!fileSystem[wordlist]) {
+                    print(`Error: Wordlist '${wordlist}' not found.`, "error");
+                    return;
+                }
+
+                const content = fileSystem[wordlist];
+                const words = content.split('\n');
+
                 print(`Hydra v9.1 (Rocking since 2000)`);
                 print(`[DATA] attacking ssh://${target}:22/`);
-                print(`[DATA] loading ${SITE_WORDS.length} passwords from ${wordlist}`);
+                print(`[DATA] loading ${words.length} passwords from ${wordlist}`);
 
+                let found = false;
+
+                // Simulate checking
                 let i = 0;
                 const interval = setInterval(() => {
-                    if (i >= SITE_WORDS.length) {
+                    if (i >= words.length) {
                         clearInterval(interval);
-                        print(`[FAIL] Password not found in list.`, "error");
+                        if (!found) {
+                            print(`[FAIL] 0 valid passwords found.`, "error");
+                            print(`[HINT] Did you add the year 2026 to the words?`, "info");
+                        }
                         return;
                     }
 
-                    const attempt = SITE_WORDS[i];
-                    // Don't flood terminal, maybe verify internal state only or print occasionally?
-                    // User code prints every attempt. Let's print every 3rd or just simulate.
-                    // Actually, let's print a few.
-                    if (Math.random() > 0.7) print(`[ATTEMPT] user: ${user} pass: ${attempt}`);
+                    const attempt = words[i];
+                    if (Math.random() > 0.8) print(`[ATTEMPT] user: ${user} pass: ${attempt}`);
 
-                    if (attempt === PASSWORD) {
+                    if (attempt === TARGET_PASSWORD && user === 'admin') {
+                        found = true;
                         clearInterval(interval);
                         print(`[22][ssh] host: ${target}   login: ${user}   password: ${attempt}`, "success");
                         print(`[STATUS] Attack finished. 1 valid credential found.`, "success");
 
                         if (!hasKey) {
                             setTimeout(() => {
-                                toast.success("SYSTEM COMPROMISED: SSH Access Granted", {
-                                    description: "Flag: [DICT_ATTACK_MASTER]. Key Generated.",
-                                    duration: 5000
+                                toast.success("SYSTEM COMPROMISED", {
+                                    description: "Root Access Granted. Flag Found.",
+                                    action: {
+                                        label: "View Flag",
+                                        onClick: () => console.log("Flag")
+                                    }
                                 });
                                 completeSubTask(3, 'byte_1');
                             }, 1000);
@@ -164,6 +232,7 @@ const CursedLibrary = () => {
                     }
                     i++;
                 }, 100);
+
             }
             else {
                 print(`Command not found: ${cmd}. Type 'help'.`, "error");
@@ -172,9 +241,9 @@ const CursedLibrary = () => {
     };
 
     return (
-        <div className="w-full h-full max-h-[600px] flex flex-col md:flex-row border-2 border-slate-700 bg-black rounded-lg overflow-hidden shadow-2xl">
+        <div className="w-full h-full min-h-[500px] flex flex-col md:flex-row border-2 border-slate-700 bg-black rounded-lg overflow-hidden shadow-2xl">
             {/* LEFT: Browser */}
-            <div className="md:w-1/2 flex flex-col border-r border-slate-700 bg-slate-100">
+            <div className="md:w-1/2 flex flex-col bg-slate-100 border-r border-slate-700">
                 {/* URL Bar */}
                 <div className="bg-slate-800 p-2 flex items-center gap-2 border-b border-black">
                     <Globe className="w-4 h-4 text-slate-400" />
@@ -188,25 +257,37 @@ const CursedLibrary = () => {
                 {/* Web Content */}
                 <div className="flex-1 overflow-y-auto p-8 font-serif text-slate-800 bg-white">
                     <div className="text-center border-b-2 border-slate-200 pb-4 mb-6">
-                        <h1 className="text-4xl font-bold text-slate-900 mb-1">OMEGA CORP</h1>
-                        <p className="text-slate-500 italic">"Building the Future, Today."</p>
+                        <h1 className="text-4xl font-bold text-slate-900 mb-1 tracking-tighter">OMEGA CORP</h1>
+                        <p className="text-slate-500 italic">"Pioneering the Future."</p>
                     </div>
 
-                    <div className="prose prose-sm max-w-none">
-                        <h2 className="text-xl font-bold text-orange-700 mt-6 mb-2">Our Leadership</h2>
-                        <p>Founded in <strong>2019</strong> by our visionary CEO, <strong>Eleanor</strong> Vance, Omega Corp has grown into a global leader in cybersecurity solutions.</p>
+                    <div className="prose prose-sm max-w-none text-justify">
+                        <p>
+                            Welcome to <strong>Omega Corp</strong>. Since our founding in <strong>2019</strong>, we have dedicated ourselves to pushing the boundaries of technology.
+                        </p>
 
-                        <h2 className="text-xl font-bold text-orange-700 mt-6 mb-2">Our Philosophy</h2>
-                        <p>We believe in <strong>Synergy</strong> and <strong>Innovation</strong>. Our headquarters in <strong>Seattle</strong> serves as the hub for our operations.</p>
+                        <h3 className="text-lg font-bold text-indigo-900 mt-6 mb-2">Our Leadership</h3>
+                        <p>
+                            Under the guidance of <strong>Eleanor</strong> Vance, our CEO, we have expanded from a small garage in <strong>Seattle</strong> to a global powerhouse. Her <strong>Vision</strong> drives us forward.
+                        </p>
 
-                        <h2 className="text-xl font-bold text-orange-700 mt-6 mb-2">2026 Strategic Vision</h2>
-                        <p>Project <strong>Titan</strong> is our newest initiative. We are launching the <strong>CyberBlade</strong> product line this fall. We are committed to <strong>Excellence</strong>.</p>
+                        <h3 className="text-lg font-bold text-indigo-900 mt-6 mb-2">Strategic Initiatives</h3>
+                        <p>
+                            Our latest endeavor, Project <strong>Titan</strong>, represents the pinnacle of our <strong>Research</strong>. We believe that true <strong>Synergy</strong> comes from combining human ingenuity with machine precision.
+                        </p>
+
+                        <div className="mt-8 bg-slate-100 p-4 rounded border-l-4 border-indigo-900">
+                            <h4 className="font-bold text-indigo-900">News Update</h4>
+                            <p className="text-xs">
+                                We are proud to announce record-breaking growth as we approach our next big milestone in <strong>2026</strong>.
+                            </p>
+                        </div>
 
                         <hr className="my-8" />
-                        <p className="text-xs text-slate-400 text-center">
-                            Copyright © 2026 Omega Corp. All rights reserved. <br />
-                            <span className="font-mono text-slate-600">Admin Portal: ssh://10.10.10.55</span>
-                        </p>
+                        <div className="text-center text-xs text-slate-400">
+                            <p>© 2026 Omega Corp. All rights reserved.</p>
+                            <p className="mt-2 font-mono">Internal Access: ssh://10.10.10.55</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -222,18 +303,19 @@ const CursedLibrary = () => {
                     </div>
                 </div>
 
-                <div ref={terminalRef} className="flex-1 overflow-y-auto p-4 space-y-1 text-green-400">
+                <div ref={terminalRef} className="flex-1 overflow-y-auto p-4 space-y-1 text-green-400 font-code">
                     {terminalOutput.map((line, i) => (
                         <div key={i} className={`whitespace-pre-wrap break-all ${line.type === 'error' ? 'text-red-500' :
-                            line.type === 'success' ? 'text-green-300 font-bold' :
-                                line.type === 'info' ? 'text-cyan-400' :
-                                    'text-slate-300'
+                            line.type === 'success' ? 'text-green-400 font-bold' :
+                                line.type === 'info' ? 'text-blue-400' :
+                                    line.type === 'system' ? 'text-purple-400 font-bold' :
+                                        'text-slate-300'
                             }`}>
                             {line.text}
                         </div>
                     ))}
                     <div className="flex items-center pt-2">
-                        <span className="text-green-500 mr-2 font-bold">root@kali:~#</span>
+                        <span className="text-red-500 mr-2 font-bold">root@kali:~#</span>
                         <input
                             ref={inputRef}
                             type="text"
@@ -250,12 +332,12 @@ const CursedLibrary = () => {
                 {hasKey && (
                     <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 backdrop-blur-sm">
                         <div className="bg-slate-900 border-2 border-green-500 p-8 rounded-lg max-w-md text-center shadow-[0_0_50px_rgba(0,255,0,0.2)]">
-                            <h2 className="text-2xl font-bold text-green-500 mb-4 animate-pulse">SYSTEM COMPROMISED</h2>
-                            <p className="text-slate-300 mb-4">Access Granted. You successfully cracked the password using a targeted dictionary attack.</p>
+                            <h2 className="text-2xl font-bold text-green-500 mb-4 animate-pulse">ACCESS GRANTED</h2>
+                            <p className="text-slate-300 mb-4">You have successfully breached the Omega Corp servers.</p>
                             <div className="border border-dashed border-green-500/50 bg-green-500/10 p-4 mb-4 font-mono text-xl text-green-400">
                                 FLAG: [DICT_ATTACK_MASTER]
                             </div>
-                            <p className="text-xs text-slate-500">Key synchronized with system core.</p>
+                            <p className="text-xs text-slate-500">File 'clearance_level_4.pdf' downloaded.</p>
                         </div>
                     </div>
                 )}

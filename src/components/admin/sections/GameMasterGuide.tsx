@@ -20,7 +20,12 @@ const LEVEL_DATA = [
             { name: "Phishing Classification", solution: "Drag 7 emails to correct folders. 3 Legitimate (HR, Payroll, Sarah), 4 Phishing (IT, CEO, Amazon, Admin).", fragment: "Threat ID" },
             { name: "Verification", solution: "Click 'SUBMIT CLASSIFICATION'. System checks if placements align with hidden 'isMalware' flags.", fragment: "LEVEL-1-COMPLETE" }
         ],
-        tools: ["Drag & Drop Interface", "Email Analyzer"]
+        tools: ["Drag & Drop Interface", "Email Analyzer"],
+        hints: [
+            "Check the sender domain carefully. 'amazon-security.net' is suspicious.",
+            "Generic greetings like 'Dear User' often indicate phishing.",
+            "Hover over links to see the actual destination URL before clicking."
+        ]
     },
     {
         level: 2,
@@ -31,7 +36,12 @@ const LEVEL_DATA = [
             { name: "Location", solution: "Analyze video. Identify 'Chandigarh' connection (Le Corbusier).", fragment: "SHA" },
             { name: "Timestamp", solution: "1 Minute Penalty for hint usage.", fragment: "DOW" }
         ],
-        tools: ["Video Player", "Flight Tracker/Map Knowledge"]
+        tools: ["Video Player", "Flight Tracker/Map Knowledge"],
+        hints: [
+            "Look for landmarks in the background. The 'Open Hand Monument' is key.",
+            "The architecture style is distinctively 'Le Corbusier'.",
+            "The city is known as 'The City Beautiful'."
+        ]
     },
     {
         level: 3,
@@ -42,19 +52,28 @@ const LEVEL_DATA = [
             { name: "Command Injection", solution: "Type 'help' to see commands.", fragment: "DICT_" },
             { name: "Brute Force", solution: "Run: cewl/hydra sequence.", fragment: "ATTACK_MASTER" }
         ],
-        tools: ["Terminal", "cewl", "hydra"]
+        tools: ["Terminal", "cewl", "hydra"],
+        hints: [
+            "Harvest words from the 'About Us' page using 'cewl'.",
+            "The password policy requires the current year (2026) appended to words.",
+            "Use 'sed' to modify your wordlist before running 'hydra'."
+        ]
     },
     {
         level: 4,
-        title: "Cold Kitchen",
+        title: "The Enigma Vault",
         theme: "Cryptography",
         key: "TH3_M4SK_0F_Z0RR0",
         tasks: [
-            { name: "Artifact Analysis", solution: "'VRvgX000c2euTGZqLqBynyH=' is Base64 encoded.", fragment: "Artifact" },
-            { name: "Clue Decoding", solution: "Sticky note 'ALPHA'. Hint 'Cooking' suggests Vigenere.", fragment: "Hint: Cooking" },
-            { name: "Decryption", solution: "Vigenere Decode (Key: ALPHA) -> Base64 Decode -> 'Th3_M4sk_0f_Z0rr0'", fragment: "Flag" }
+            { name: "Rogue Intern", solution: "ROT13 -> Base64 Decode", fragment: "Beat_me_if_Possible!!!!" },
+            { name: "Stacked Cipher", solution: "Base64 Decode -> Reverse String", fragment: "Veltech.Welcomes_You-All" }
         ],
-        tools: ["CyberChef", "Vigenere Cipher Decoder", "Base64 Decoder"]
+        tools: ["CyberChef", "Vigenere Cipher Decoder", "Base64 Decoder"],
+        hints: [
+            "Layer 1: 'My mother used to make roti using base on a roti board' -> ROT13 + Base64.",
+            "Layer 2: 'The base needs to be reversed' -> Base64 Decode then Reverse string.",
+            "The final key is displayed after solving Layer 2."
+        ]
     },
     {
         level: 5,
@@ -66,7 +85,12 @@ const LEVEL_DATA = [
             { name: "Hint Penalty", solution: "3 Minute Penalty for hint usage.", fragment: "FTP" },
             { name: "Flag Extraction", solution: "Filter FTP/TCP stream. Flag: 'P64P_4N4L7S1S_SU55355FUL_4624A8B6'", fragment: "Flag" }
         ],
-        tools: ["Wireshark", "Network Miner", "Packet Analysis"]
+        tools: ["Wireshark", "Network Miner", "Packet Analysis"],
+        hints: [
+            "The hint reveals: 'Today i am travelling from Chennai(20) to Delhi(21)...'",
+            "Filter for HTTP or FTP traffic to find file transfers.",
+            "Look for a file named 'flag.txt' or similar inside the packet capture."
+        ]
     }
 ];
 
@@ -79,7 +103,7 @@ export const GameMasterGuide = () => {
     return (
         <div className="space-y-6">
             <h2 className="text-2xl font-bold font-display text-primary">Game Master Guide (Spoilers)</h2>
-            <div className="rounded-md border border-white/10 bg-black/40">
+            <div className="rounded-md border border-white/10 bg-black/40 overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow className="border-white/10 hover:bg-white/5">
@@ -87,6 +111,7 @@ export const GameMasterGuide = () => {
                             <TableHead className="text-white">Theme</TableHead>
                             <TableHead className="text-white">Key (Solution)</TableHead>
                             <TableHead className="text-white">Tasks & Solutions</TableHead>
+                            <TableHead className="text-white">Hints (Use Wisely)</TableHead>
                             <TableHead className="text-white">Required Tools/Resources</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -127,6 +152,15 @@ export const GameMasterGuide = () => {
                                             </div>
                                         ))}
                                     </div>
+                                </TableCell>
+                                <TableCell className="align-top max-w-[250px]">
+                                    <ul className="list-disc list-inside space-y-1">
+                                        {level.hints.map((hint, idx) => (
+                                            <li key={idx} className="text-xs text-yellow-500/80">
+                                                {hint}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </TableCell>
                                 <TableCell className="align-top">
                                     <div className="flex flex-col gap-1">

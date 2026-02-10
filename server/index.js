@@ -21,11 +21,27 @@ app.use(cors());
 app.use(express.json());
 
 // Database Connection
-const MONGODB_URI = "mongodb+srv://saipavankvrn:J12Y05@cluster0.zbdu2y4.mongodb.net/escape";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://saipavankvrn:J12Y05@cluster0.zbdu2y4.mongodb.net/escape";
 
-mongoose.connect(MONGODB_URI)
+mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+    family: 4 // Use IPv4, skip IPv6
+})
     .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+        // Check for common network/DNS errors
+        if (
+            (err.name === 'MongoNetworkError') ||
+            (err.message && (err.message.includes('ECONNREFUSED') || err.message.includes('querySrv')))
+        ) {
+            console.error('\n❌ MongoDB Connection Failed: Network/DNS Issue');
+            console.error('👉 ACTION REQUIRED:');
+            console.error('1. Check MongoDB Atlas > Network Access > Add IP Address > Add Current IP Address.');
+            console.error('2. If you are on a restricted network (office/school), this might be a firewall issue.');
+            console.error('3. Try using a different DNS (like 8.8.8.8).\n');
+        }
+    });
 
 // Socket.io
 io.on('connection', (socket) => {

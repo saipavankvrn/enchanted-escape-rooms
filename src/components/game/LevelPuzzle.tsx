@@ -35,18 +35,18 @@ const puzzles = [
     penalty: 60,
   },
   {
-    title: "Targeted Penetration",
-    description: "The target is Omega Corp. You must gain SSH access to their admin server (10.10.10.55). Standard wordlists have failed, so you must generate a custom dictionary from their website content.",
-    hint: "Use 'help' command",
+    title: "The Cursed Library",
+    description: "Mission: You have found the hidden server for 'Omega Corp.' However, the login is locked. You need to scrape the company’s own website to build a custom password list and then use a brute-force tool to find the admin's password.",
+    hint: "A hunter doesn't bring their own bait; they find it in the environment. Scrape the 'About Us' page to find the words that will unlock the gate.",
     action: "Launch Terminal",
-    secretHint: "Run 'cewl' then 'hydra' to crack the password.",
+    secretHint: "Use 'cewl' to gather words. Use 'sed' to append '2026' to them. Use 'hydra' to attack.",
   },
   {
-    title: "Cold Kitchen",
-    description: "A mysterious data string has been recovered. First, you must decipher it using the Vigenere Cipher, then use a Base64 decoder to reveal the final key. A sticky note with 'ALPHA' was attached to the server.",
-    hint: "Use CyberChef. Recipe: Vigenere Decode (Key: ALPHA) -> From Base64.",
-    action: "Decode & Decrypt",
-    secretHint: "The output of Vigenere is a Base64 string. Decode that to get the flag.",
+    title: "The Enigma Vault",
+    description: "Two encrypted messages block your path. A rogue intern and an overconfident developer have left behind puzzles they claim are 'unbreakable'. Decode them both to proceed.",
+    hint: "For the first, try substituting letters. For the second, reverse the layers of encoding.",
+    action: "Access Decryption Module",
+    secretHint: "P1: ROT13 -> Base64. P2: URL Decode -> Base64 -> Reverse.",
   },
   {
     title: "The Shadow Heart",
@@ -180,7 +180,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzle
           </div>
         )}
 
-        {!showHint && puzzle.hint && (
+        {!showHint && puzzle.hint && level !== 4 && level !== 5 && (
           <Button
             onClick={() => {
               if (puzzle.penalty && onPenalty) {
