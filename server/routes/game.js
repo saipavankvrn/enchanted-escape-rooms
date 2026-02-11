@@ -52,7 +52,8 @@ router.post('/save', auth, async (req, res) => {
             levelTimestamps,
             subTasksCompleted,
             totalTimeSeconds,
-            isCompleted
+            isCompleted,
+            hintsUsed
         } = req.body;
 
         const updateData = {};
@@ -64,7 +65,7 @@ router.post('/save', auth, async (req, res) => {
         if (subTasksCompleted !== undefined) updateData.subTasksCompleted = subTasksCompleted;
         if (totalTimeSeconds !== undefined) updateData.totalTimeSeconds = totalTimeSeconds;
         if (isCompleted !== undefined) updateData.isCompleted = isCompleted;
-        if (req.body.hintsUsed !== undefined) updateData.hintsUsed = req.body.hintsUsed;
+        if (hintsUsed !== undefined) updateData.hintsUsed = hintsUsed;
 
         const user = await User.findByIdAndUpdate(
             req.userId,

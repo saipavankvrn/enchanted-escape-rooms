@@ -26,8 +26,9 @@ const adminAuth = async (req, res, next) => {
 router.get('/players', adminAuth, async (req, res) => {
     try {
         const players = await User.find({ role: 'user' }) // Optionally filter out admins
-            .select('username currentLevel completedLevels totalTimeSeconds isCompleted createdAt endTime startTime levelTimestamps')
-            .sort({ createdAt: -1 });
+            .select('username currentLevel completedLevels totalTimeSeconds isCompleted createdAt endTime startTime levelTimestamps hintsUsed')
+            .sort({ createdAt: -1 })
+            .lean();
 
         // Map to match frontend expected structure if slightly different, 
         // but the model was designed to match mostly.
@@ -44,7 +45,8 @@ router.get('/players', adminAuth, async (req, res) => {
             created_at: p.createdAt,
             end_time: p.endTime,
             start_time: p.startTime,
-            level_timestamps: p.levelTimestamps || {}
+            level_timestamps: p.levelTimestamps || {},
+            hints_used: p.hintsUsed || 0
         }));
 
         res.json(mappedPlayers);
