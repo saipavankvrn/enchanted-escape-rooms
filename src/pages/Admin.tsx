@@ -10,8 +10,8 @@ import { GameMasterGuide } from '@/components/admin/sections/GameMasterGuide';
 import { PlayerData } from '@/types/admin';
 import { toast } from 'sonner';
 
-const API_URL = `http://${window.location.hostname}:5000/api/admin`;
-const SOCKET_URL = `http://${window.location.hostname}:5000`;
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000/api/admin' : '/api/admin');
+const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
 
 const Admin = () => {
   const { user, loading, isAdmin, signOut } = useAuth();

@@ -70,14 +70,21 @@ app.use('/api/game', gameRoutes);
 app.use('/api/admin', adminRoutes);
 
 const PORT = process.env.PORT || 5000;
-const server = httpServer.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+
+// Only start the server if we're not running as a Vercel function
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    httpServer.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+// Export for Vercel
+export default app;
 
 // Graceful Shutdown
 const shutdown = () => {
     console.log('Shutting down server...');
-    server.close(() => {
+    httpServer.close(() => {
         console.log('HTTP server closed');
         mongoose.connection.close(false, () => {
             console.log('MongoDB connection closed');

@@ -27,7 +27,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({ onUserAdded }) => {
 
         try {
             const token = localStorage.getItem('token');
-            const API_URL = `http://${window.location.hostname}:5000/api/admin/players/create`;
+            const BASE_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : '/api');
+            const API_URL = `${BASE_URL}/admin/players/create`;
 
             const res = await fetch(API_URL, {
                 method: 'POST',
