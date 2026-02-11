@@ -1,40 +1,44 @@
 import { useState, useEffect } from 'react';
 import { useGameState } from '@/hooks/useGameState';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Lock, Unlock, Terminal, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const EnigmaVault = () => {
+    const { user } = useAuth();
     const { completeSubTask, gameState, applyPenalty } = useGameState();
     const collectedBytes = gameState.subTasksCompleted[4] || [];
 
     // Task 1 State
-    const [answer1, setAnswer1] = useState(() => localStorage.getItem('level4_answer1') || '');
+    const [answer1, setAnswer1] = useState('');
     const [solved1, setSolved1] = useState(collectedBytes.includes('byte_1'));
 
     // Task 2 State
-    const [answer2, setAnswer2] = useState(() => localStorage.getItem('level4_answer2') || '');
+    const [answer2, setAnswer2] = useState('');
     const [solved2, setSolved2] = useState(collectedBytes.includes('byte_2'));
 
     // Hint States
-    const [hints1Revealed, setHints1Revealed] = useState(() => localStorage.getItem('level4_hint1') === 'true');
-    const [hints2Revealed, setHints2Revealed] = useState(() => localStorage.getItem('level4_hint2') === 'true');
+    const [hints1Revealed, setHints1Revealed] = useState(false);
+    const [hints2Revealed, setHints2Revealed] = useState(false);
 
     useEffect(() => {
-        localStorage.setItem('level4_answer1', answer1);
-    }, [answer1]);
+        if (user) {
+            setAnswer1(localStorage.getItem(`user_${user.id}_level4_answer1`) || '');
+            setAnswer2(localStorage.getItem(`user_${user.id}_level4_answer2`) || '');
+            setHints1Revealed(localStorage.getItem(`user_${user.id}_level4_hint1`) === 'true');
+            setHints2Revealed(localStorage.getItem(`user_${user.id}_level4_hint2`) === 'true');
+        }
+    }, [user]);
 
     useEffect(() => {
-        localStorage.setItem('level4_answer2', answer2);
-    }, [answer2]);
-
-    useEffect(() => {
-        localStorage.setItem('level4_hint1', hints1Revealed.toString());
-    }, [hints1Revealed]);
-
-    useEffect(() => {
-        localStorage.setItem('level4_hint2', hints2Revealed.toString());
-    }, [hints2Revealed]);
+        if (user) {
+            localStorage.setItem(`user_${user.id}_level4_answer1`, answer1);
+            localStorage.setItem(`user_${user.id}_level4_answer2`, answer2);
+            localStorage.setItem(`user_${user.id}_level4_hint1`, hints1Revealed.toString());
+            localStorage.setItem(`user_${user.id}_level4_hint2`, hints2Revealed.toString());
+        }
+    }, [answer1, answer2, hints1Revealed, hints2Revealed, user]);
 
     useEffect(() => {
         if (collectedBytes.includes('byte_1')) setSolved1(true);

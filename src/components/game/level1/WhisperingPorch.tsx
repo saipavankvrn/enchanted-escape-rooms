@@ -3,37 +3,38 @@ import { Mail, CheckCircle2, AlertTriangle, FileText, Globe, Move, RefreshCw } f
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useGameState } from '@/hooks/useGameState';
+import { useAuth } from '@/hooks/useAuth';
 import { getLevel1Emails, Email } from './Level1Data';
 
 const WhisperingPorch = () => {
+    const { user } = useAuth();
     const { completeSubTask, gameState } = useGameState();
     const [initialEmails] = useState<Email[]>(getLevel1Emails());
 
     // State for the three buckets
-    const [inbox, setInbox] = useState<Email[]>(() => {
-        const saved = localStorage.getItem('level1_inbox');
-        return saved ? JSON.parse(saved) : initialEmails;
-    });
-    const [safeBox, setSafeBox] = useState<Email[]>(() => {
-        const saved = localStorage.getItem('level1_safebox');
-        return saved ? JSON.parse(saved) : [];
-    });
-    const [phishingBox, setPhishingBox] = useState<Email[]>(() => {
-        const saved = localStorage.getItem('level1_phishingbox');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [inbox, setInbox] = useState<Email[]>(initialEmails);
+    const [safeBox, setSafeBox] = useState<Email[]>([]);
+    const [phishingBox, setPhishingBox] = useState<Email[]>([]);
 
     useEffect(() => {
-        localStorage.setItem('level1_inbox', JSON.stringify(inbox));
-    }, [inbox]);
+        if (user) {
+            const sInbox = localStorage.getItem(`user_${user.id}_level1_inbox`);
+            const sSafe = localStorage.getItem(`user_${user.id}_level1_safebox`);
+            const sPhish = localStorage.getItem(`user_${user.id}_level1_phishingbox`);
+
+            if (sInbox) setInbox(JSON.parse(sInbox));
+            if (sSafe) setSafeBox(JSON.parse(sSafe));
+            if (sPhish) setPhishingBox(JSON.parse(sPhish));
+        }
+    }, [user]);
 
     useEffect(() => {
-        localStorage.setItem('level1_safebox', JSON.stringify(safeBox));
-    }, [safeBox]);
-
-    useEffect(() => {
-        localStorage.setItem('level1_phishingbox', JSON.stringify(phishingBox));
-    }, [phishingBox]);
+        if (user) {
+            localStorage.setItem(`user_${user.id}_level1_inbox`, JSON.stringify(inbox));
+            localStorage.setItem(`user_${user.id}_level1_safebox`, JSON.stringify(safeBox));
+            localStorage.setItem(`user_${user.id}_level1_phishingbox`, JSON.stringify(phishingBox));
+        }
+    }, [inbox, safeBox, phishingBox, user]);
 
     const [draggedEmail, setDraggedEmail] = useState<Email | null>(null);
     const [isChecking, setIsChecking] = useState(false);

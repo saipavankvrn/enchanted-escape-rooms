@@ -2,15 +2,25 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ShieldCheck, Download, AlertTriangle, Network, FileDown } from 'lucide-react';
 import { useGameState } from '@/hooks/useGameState';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 const FinalEscape = () => {
+    const { user } = useAuth();
     const { applyPenalty } = useGameState();
-    const [hintRevealed, setHintRevealed] = useState(() => localStorage.getItem('level5_hint_revealed') === 'true');
+    const [hintRevealed, setHintRevealed] = useState(false);
 
     useEffect(() => {
-        localStorage.setItem('level5_hint_revealed', hintRevealed.toString());
-    }, [hintRevealed]);
+        if (user) {
+            setHintRevealed(localStorage.getItem(`user_${user.id}_level5_hint_revealed`) === 'true');
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (user) {
+            localStorage.setItem(`user_${user.id}_level5_hint_revealed`, hintRevealed.toString());
+        }
+    }, [hintRevealed, user]);
 
     const handleDownload = () => {
         const link = document.createElement('a');

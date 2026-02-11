@@ -16,14 +16,21 @@ const Game = () => {
   const { user, signOut, loading, isAdmin } = useAuth();
   const { gameState, startGame, completeLevel, elapsedTime, isPlaying, applyPenalty } = useGameState();
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
-  const [isInMission, setIsInMission] = useState(() => {
-    return localStorage.getItem('isInMission') === 'true';
-  });
+  const [isInMission, setIsInMission] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    localStorage.setItem('isInMission', isInMission.toString());
-  }, [isInMission]);
+    if (user) {
+      const saved = localStorage.getItem(`user_${user.id}_isInMission`) === 'true';
+      setIsInMission(saved);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(`user_${user.id}_isInMission`, isInMission.toString());
+    }
+  }, [isInMission, user]);
 
   const remainingTime = Math.max(0, TOTAL_TIME - elapsedTime);
   const isDefeated = elapsedTime >= TOTAL_TIME && !gameState.isCompleted && (isPlaying || gameState.startTime !== null);

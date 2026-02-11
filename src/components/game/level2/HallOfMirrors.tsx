@@ -2,45 +2,40 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search, CheckCircle2, AlertTriangle, Fingerprint, Globe, Layers, User, Image, Lock, Clock, Map, Ghost, Eye, HelpCircle } from 'lucide-react';
 import { useGameState } from '@/hooks/useGameState';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 const HallOfMirrors = ({ onPenalty }: { onPenalty?: (time: number) => void }) => {
+    const { user } = useAuth();
     const { gameState, completeSubTask, trackHintUsage } = useGameState();
     const [activeTab, setActiveTab] = useState(0);
 
     // Task States
-    const [answers, setAnswers] = useState(() => {
-        const saved = localStorage.getItem('level2_answers');
-        return saved ? JSON.parse(saved) : {
-            0: '', // Alibi
-            1: '', // Reflection
-            2: '', // Network
-            3: '', // Biometric
-            4: ''  // Geographic
-        };
+    const [answers, setAnswers] = useState<Record<number, string>>({
+        0: '', 1: '', 2: '', 3: '', 4: ''
     });
-
-    const [solvedStages, setSolvedStages] = useState<boolean[]>(() => {
-        const saved = localStorage.getItem('level2_solved');
-        return saved ? JSON.parse(saved) : [false, false, false, false, false];
-    });
-
-    const [revealedHints, setRevealedHints] = useState<boolean[]>(() => {
-        const saved = localStorage.getItem('level2_hints');
-        return saved ? JSON.parse(saved) : [false, false, false, false, false];
-    });
+    const [solvedStages, setSolvedStages] = useState<boolean[]>([false, false, false, false, false]);
+    const [revealedHints, setRevealedHints] = useState<boolean[]>([false, false, false, false, false]);
 
     useEffect(() => {
-        localStorage.setItem('level2_answers', JSON.stringify(answers));
-    }, [answers]);
+        if (user) {
+            const sAnswers = localStorage.getItem(`user_${user.id}_level2_answers`);
+            const sSolved = localStorage.getItem(`user_${user.id}_level2_solved`);
+            const sHints = localStorage.getItem(`user_${user.id}_level2_hints`);
+
+            if (sAnswers) setAnswers(JSON.parse(sAnswers));
+            if (sSolved) setSolvedStages(JSON.parse(sSolved));
+            if (sHints) setRevealedHints(JSON.parse(sHints));
+        }
+    }, [user]);
 
     useEffect(() => {
-        localStorage.setItem('level2_solved', JSON.stringify(solvedStages));
-    }, [solvedStages]);
-
-    useEffect(() => {
-        localStorage.setItem('level2_hints', JSON.stringify(revealedHints));
-    }, [revealedHints]);
+        if (user) {
+            localStorage.setItem(`user_${user.id}_level2_answers`, JSON.stringify(answers));
+            localStorage.setItem(`user_${user.id}_level2_solved`, JSON.stringify(solvedStages));
+            localStorage.setItem(`user_${user.id}_level2_hints`, JSON.stringify(revealedHints));
+        }
+    }, [answers, solvedStages, revealedHints, user]);
 
     // Answers
     const SOLUTIONS = {

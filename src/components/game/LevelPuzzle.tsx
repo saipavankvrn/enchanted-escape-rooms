@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGameState } from '@/hooks/useGameState';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Lightbulb } from 'lucide-react';
 import SecretKeyInput from './SecretKeyInput';
@@ -61,19 +62,22 @@ const puzzles = [
 ];
 
 const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzleProps) => {
+  const { user } = useAuth();
   const { trackHintUsage } = useGameState();
-  const [showHint, setShowHint] = useState(() => {
-    return localStorage.getItem(`level_${level}_hint_revealed`) === 'true';
-  });
+  const [showHint, setShowHint] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem(`level_${level}_hint_revealed`, showHint.toString());
-  }, [showHint, level]);
+    if (user) {
+      setShowHint(localStorage.getItem(`user_${user.id}_level_${level}_hint_revealed`) === 'true');
+    }
+  }, [user, level]);
 
   useEffect(() => {
-    setShowHint(localStorage.getItem(`level_${level}_hint_revealed`) === 'true');
-  }, [level]);
+    if (user) {
+      localStorage.setItem(`user_${user.id}_level_${level}_hint_revealed`, showHint.toString());
+    }
+  }, [showHint, level, user]);
   const puzzle = puzzles[level - 1];
 
   const handleKeySubmit = async (key: string) => {
