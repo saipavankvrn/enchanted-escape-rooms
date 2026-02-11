@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search, CheckCircle2, AlertTriangle, Fingerprint, Globe, Layers, User, Image, Lock, Clock, Map, Ghost, Eye, HelpCircle } from 'lucide-react';
 import { useGameState } from '@/hooks/useGameState';
@@ -9,16 +9,38 @@ const HallOfMirrors = ({ onPenalty }: { onPenalty?: (time: number) => void }) =>
     const [activeTab, setActiveTab] = useState(0);
 
     // Task States
-    const [answers, setAnswers] = useState({
-        0: '', // Alibi
-        1: '', // Reflection
-        2: '', // Network
-        3: '', // Biometric
-        4: ''  // Geographic
+    const [answers, setAnswers] = useState(() => {
+        const saved = localStorage.getItem('level2_answers');
+        return saved ? JSON.parse(saved) : {
+            0: '', // Alibi
+            1: '', // Reflection
+            2: '', // Network
+            3: '', // Biometric
+            4: ''  // Geographic
+        };
     });
 
-    const [solvedStages, setSolvedStages] = useState<boolean[]>([false, false, false, false, false]);
-    const [revealedHints, setRevealedHints] = useState<boolean[]>([false, false, false, false, false]);
+    const [solvedStages, setSolvedStages] = useState<boolean[]>(() => {
+        const saved = localStorage.getItem('level2_solved');
+        return saved ? JSON.parse(saved) : [false, false, false, false, false];
+    });
+
+    const [revealedHints, setRevealedHints] = useState<boolean[]>(() => {
+        const saved = localStorage.getItem('level2_hints');
+        return saved ? JSON.parse(saved) : [false, false, false, false, false];
+    });
+
+    useEffect(() => {
+        localStorage.setItem('level2_answers', JSON.stringify(answers));
+    }, [answers]);
+
+    useEffect(() => {
+        localStorage.setItem('level2_solved', JSON.stringify(solvedStages));
+    }, [solvedStages]);
+
+    useEffect(() => {
+        localStorage.setItem('level2_hints', JSON.stringify(revealedHints));
+    }, [revealedHints]);
 
     // Answers
     const SOLUTIONS = {

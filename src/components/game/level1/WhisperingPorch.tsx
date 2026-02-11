@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, CheckCircle2, AlertTriangle, FileText, Globe, Move, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -10,9 +10,30 @@ const WhisperingPorch = () => {
     const [initialEmails] = useState<Email[]>(getLevel1Emails());
 
     // State for the three buckets
-    const [inbox, setInbox] = useState<Email[]>(initialEmails);
-    const [safeBox, setSafeBox] = useState<Email[]>([]);
-    const [phishingBox, setPhishingBox] = useState<Email[]>([]);
+    const [inbox, setInbox] = useState<Email[]>(() => {
+        const saved = localStorage.getItem('level1_inbox');
+        return saved ? JSON.parse(saved) : initialEmails;
+    });
+    const [safeBox, setSafeBox] = useState<Email[]>(() => {
+        const saved = localStorage.getItem('level1_safebox');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [phishingBox, setPhishingBox] = useState<Email[]>(() => {
+        const saved = localStorage.getItem('level1_phishingbox');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    useEffect(() => {
+        localStorage.setItem('level1_inbox', JSON.stringify(inbox));
+    }, [inbox]);
+
+    useEffect(() => {
+        localStorage.setItem('level1_safebox', JSON.stringify(safeBox));
+    }, [safeBox]);
+
+    useEffect(() => {
+        localStorage.setItem('level1_phishingbox', JSON.stringify(phishingBox));
+    }, [phishingBox]);
 
     const [draggedEmail, setDraggedEmail] = useState<Email | null>(null);
     const [isChecking, setIsChecking] = useState(false);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Lightbulb } from 'lucide-react';
@@ -62,8 +62,18 @@ const puzzles = [
 
 const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzleProps) => {
   const { trackHintUsage } = useGameState();
-  const [showHint, setShowHint] = useState(false);
+  const [showHint, setShowHint] = useState(() => {
+    return localStorage.getItem(`level_${level}_hint_revealed`) === 'true';
+  });
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(`level_${level}_hint_revealed`, showHint.toString());
+  }, [showHint, level]);
+
+  useEffect(() => {
+    setShowHint(localStorage.getItem(`level_${level}_hint_revealed`) === 'true');
+  }, [level]);
   const puzzle = puzzles[level - 1];
 
   const handleKeySubmit = async (key: string) => {

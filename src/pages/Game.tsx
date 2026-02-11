@@ -16,8 +16,14 @@ const Game = () => {
   const { user, signOut, loading, isAdmin } = useAuth();
   const { gameState, startGame, completeLevel, elapsedTime, isPlaying, applyPenalty } = useGameState();
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
-  const [isInMission, setIsInMission] = useState(false);
+  const [isInMission, setIsInMission] = useState(() => {
+    return localStorage.getItem('isInMission') === 'true';
+  });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('isInMission', isInMission.toString());
+  }, [isInMission]);
 
   const remainingTime = Math.max(0, TOTAL_TIME - elapsedTime);
   const isDefeated = elapsedTime >= TOTAL_TIME && !gameState.isCompleted && (isPlaying || gameState.startTime !== null);
@@ -83,6 +89,7 @@ const Game = () => {
   };
 
   const handleSignOut = async () => {
+    localStorage.removeItem('isInMission');
     await signOut();
     navigate('/');
   };

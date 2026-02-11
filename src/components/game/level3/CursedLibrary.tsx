@@ -5,22 +5,51 @@ import { Globe } from 'lucide-react';
 
 const CursedLibrary = () => {
     const { gameState, completeSubTask } = useGameState();
-    const [terminalOutput, setTerminalOutput] = useState<{ text: string; type: 'info' | 'success' | 'error' | 'default' | 'system' }[]>([
-        { text: "KALI LINUX - PENTEST STATION", type: 'system' },
-        { text: "CONNECTED TO: OMEGA CORP INTERNAL NETWORK", type: 'default' },
-        { text: "> [LIBRARIAN]: Access denied. The gate is locked.", type: 'info' },
-        { text: "> [LIBRARIAN]: A hunter doesn't bring their own bait; they find it in the environment.", type: 'info' },
-        { text: "> [SUGGESTION]: Scrape the 'About Us' page to find the words... and maybe the year.", type: 'info' },
-        { text: "---------------------------------------------------", type: 'default' },
-        { text: "Available Tools: nmap, cewl, cat, sed, hydra, clear, help", type: 'default' },
-        { text: "", type: 'default' },
+    const [initialState] = useState(() => [
+        { text: "KALI LINUX - PENTEST STATION", type: 'system' as const },
+        { text: "CONNECTED TO: OMEGA CORP INTERNAL NETWORK", type: 'default' as const },
+        { text: "> [LIBRARIAN]: Access denied. The gate is locked.", type: 'info' as const },
+        { text: "> [LIBRARIAN]: A hunter doesn't bring their own bait; they find it in the environment.", type: 'info' as const },
+        { text: "> [SUGGESTION]: Scrape the 'About Us' page to find the words... and maybe the year.", type: 'info' as const },
+        { text: "---------------------------------------------------", type: 'default' as const },
+        { text: "Available Tools: nmap, cewl, cat, sed, hydra, clear, help", type: 'default' as const },
+        { text: "", type: 'default' as const },
     ]);
-    const [command, setCommand] = useState('');
+
+    const [terminalOutput, setTerminalOutput] = useState<{ text: string; type: 'info' | 'success' | 'error' | 'default' | 'system' }[]>(() => {
+        const saved = localStorage.getItem('level3_terminal_output');
+        return saved ? JSON.parse(saved) : [
+            { text: "KALI LINUX - PENTEST STATION", type: 'system' },
+            { text: "CONNECTED TO: OMEGA CORP INTERNAL NETWORK", type: 'default' },
+            { text: "> [LIBRARIAN]: Access denied. The gate is locked.", type: 'info' },
+            { text: "> [LIBRARIAN]: A hunter doesn't bring their own bait; they find it in the environment.", type: 'info' },
+            { text: "> [SUGGESTION]: Scrape the 'About Us' page to find the words... and maybe the year.", type: 'info' },
+            { text: "---------------------------------------------------", type: 'default' },
+            { text: "Available Tools: nmap, cewl, cat, sed, hydra, clear, help", type: 'default' },
+            { text: "", type: 'default' },
+        ];
+    });
+    const [command, setCommand] = useState(() => localStorage.getItem('level3_command') || '');
 
     // File system state
-    const [fileSystem, setFileSystem] = useState<Record<string, string>>({
-        "readme.txt": "Target IP: 10.10.10.55\nGoal: SSH Access via 'admin' user.\nHint: Harvest the site’s words, append the current year (2026), and unleash the beast to find the one true key."
+    const [fileSystem, setFileSystem] = useState<Record<string, string>>(() => {
+        const saved = localStorage.getItem('level3_filesystem');
+        return saved ? JSON.parse(saved) : {
+            "readme.txt": "Target IP: 10.10.10.55\nGoal: SSH Access via 'admin' user.\nHint: Harvest the site’s words, append the current year (2026), and unleash the beast to find the one true key."
+        };
     });
+
+    useEffect(() => {
+        localStorage.setItem('level3_terminal_output', JSON.stringify(terminalOutput));
+    }, [terminalOutput]);
+
+    useEffect(() => {
+        localStorage.setItem('level3_command', command);
+    }, [command]);
+
+    useEffect(() => {
+        localStorage.setItem('level3_filesystem', JSON.stringify(fileSystem));
+    }, [fileSystem]);
 
     const terminalRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);

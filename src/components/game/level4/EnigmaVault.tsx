@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { toast } from 'sonner';
 import { Lock, Unlock, Terminal, ShieldAlert } from 'lucide-react';
@@ -9,16 +9,37 @@ const EnigmaVault = () => {
     const collectedBytes = gameState.subTasksCompleted[4] || [];
 
     // Task 1 State
-    const [answer1, setAnswer1] = useState('');
+    const [answer1, setAnswer1] = useState(() => localStorage.getItem('level4_answer1') || '');
     const [solved1, setSolved1] = useState(collectedBytes.includes('byte_1'));
 
     // Task 2 State
-    const [answer2, setAnswer2] = useState('');
+    const [answer2, setAnswer2] = useState(() => localStorage.getItem('level4_answer2') || '');
     const [solved2, setSolved2] = useState(collectedBytes.includes('byte_2'));
 
     // Hint States
-    const [hints1Revealed, setHints1Revealed] = useState(false);
-    const [hints2Revealed, setHints2Revealed] = useState(false);
+    const [hints1Revealed, setHints1Revealed] = useState(() => localStorage.getItem('level4_hint1') === 'true');
+    const [hints2Revealed, setHints2Revealed] = useState(() => localStorage.getItem('level4_hint2') === 'true');
+
+    useEffect(() => {
+        localStorage.setItem('level4_answer1', answer1);
+    }, [answer1]);
+
+    useEffect(() => {
+        localStorage.setItem('level4_answer2', answer2);
+    }, [answer2]);
+
+    useEffect(() => {
+        localStorage.setItem('level4_hint1', hints1Revealed.toString());
+    }, [hints1Revealed]);
+
+    useEffect(() => {
+        localStorage.setItem('level4_hint2', hints2Revealed.toString());
+    }, [hints2Revealed]);
+
+    useEffect(() => {
+        if (collectedBytes.includes('byte_1')) setSolved1(true);
+        if (collectedBytes.includes('byte_2')) setSolved2(true);
+    }, [collectedBytes]);
 
     const revealHint1 = () => {
         if (confirm("Revealing this hint will cost you 2 minutes. Proceed?")) {

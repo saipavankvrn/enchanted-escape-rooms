@@ -14,87 +14,91 @@ const LEVEL_DATA = [
     {
         level: 1,
         title: "The Whispering Porch",
-        theme: "Advanced Phishing Detection",
+        theme: "Phishing Intelligence",
         key: "LEVEL-1-COMPLETE",
         tasks: [
-            { name: "Phishing Classification", solution: "Drag 7 emails to correct folders. 3 Legitimate (HR, Payroll, Sarah), 4 Phishing (IT, CEO, Amazon, Admin).", fragment: "Threat ID" },
-            { name: "Verification", solution: "Click 'SUBMIT CLASSIFICATION'. System checks if placements align with hidden 'isMalware' flags.", fragment: "LEVEL-1-COMPLETE" }
+            { name: "Threat Triage", solution: "Sort 7 emails. Legit: HR Policy, Project Alpha, Payroll. Phishing: IT Support (micros0ft), CEO Fraud (gmail), Amazon (.exe), Admin (goggle).", fragment: "KEY" },
+            { name: "Submission", solution: "All 7 must be perfect. System verifies against 'isMalware' flags and generates access key.", fragment: "LEVEL-1" }
         ],
-        tools: ["Drag & Drop Interface", "Email Analyzer"],
+        tools: ["Drag & Drop", "Email Headers", "Domain Verification"],
         hints: [
-            "Check the sender domain carefully. 'amazon-security.net' is suspicious.",
-            "Generic greetings like 'Dear User' often indicate phishing.",
-            "Hover over links to see the actual destination URL before clicking."
+            "Penalty: 60s for global level hint.",
+            "Look for 'micros0ft' or 'goggle' spelling errors in domains.",
+            "Suspicious attachments like '.exe' are immediate red flags.",
+            "CEO fraud uses urgency and external (gmail) addresses."
         ]
     },
     {
         level: 2,
         title: "The Hall of Mirrors",
-        theme: "Logic & Deduction (Cold Case)",
+        theme: "Logic & Forensic Deduction",
         key: "SPOOFED_2026",
         tasks: [
-            { name: "1. Alibi Intersection", solution: "60 minutes (Overlap Duration)", fragment: "SPO" },
-            { name: "2. Reflection Paradox", solution: "6 hours (Time Difference)", fragment: "OF" },
-            { name: "3. Network Ghost", solution: "Windows OS (Device Mismatch)", fragment: "ED_" },
-            { name: "4. Password Trap", solution: "Mirror B", fragment: "20" },
-            { name: "5. Geographic Impossible", solution: "120km/h (Required Speed)", fragment: "26" }
+            { name: "Alibi", solution: "60 (Minutes overlap between 1-3 PM lab and 2 PM beach post).", fragment: "SPO" },
+            { name: "Reflection", solution: "6 (Difference between 10 AM analog and 4 PM/16:00 digital).", fragment: "OF" },
+            { name: "Network", solution: "windows (Login OS doesn't match Student's Macbook registry).", fragment: "ED_" },
+            { name: "Trap", solution: "mirror b (Rejected correct uniform name, indicating phishing).", fragment: "20" },
+            { name: "Geography", solution: "120 (10km in 5 min requires 120 km/h velocity).", fragment: "26" }
         ],
-        tools: ["Logic", "Calculator", "Attention to Detail"],
+        tools: ["Sherlock Insight", "Logic Engine", "Calculator"],
         hints: [
-            "Task 1: Calculate the duration of the overlap.",
-            "Task 2: Phone time minus Mirror time.",
-            "Task 3: Which OS does not match the registry?",
-            "Task 4: Check the ID badge logo.",
-            "Task 5: Speed = Distance / Time."
+            "Penalty: 20s per 'Sherlock's Insight' requested.",
+            "Analog clocks (Mirror) don't show AM/PM—digital phones do.",
+            "A phishing trap (Shadow Clone) rejects real truths.",
+            "Velocity = Distance / (Minutes/60)."
         ]
     },
     {
         level: 3,
-        title: "The Cold Kitchen",
-        theme: "Cryptography",
+        title: "The Cold Kitchen (Vault)",
+        theme: "Multi-Layered Cryptography",
         key: "TH3_M4SK_0F_Z0RR0",
         tasks: [
-            { name: "Rogue Intern", solution: "ROT13 -> Base64 Decode", fragment: "Beat_me_if_Possible!!!!" },
-            { name: "Stacked Cipher", solution: "Base64 Decode -> Reverse String", fragment: "Veltech.Welcomes_You-All" }
+            { name: "Rogue Intern", solution: "ROT13(DzIu...) -> Base64 Decode -> 'Beat_me_if_Possible!!!!'", fragment: "TH3_M4SK" },
+            { name: "Stacked Cipher", solution: "Base64(bGxBL...) -> Reverse -> 'Veltech.Welcomes_You-All'", fragment: "Z0RR0" }
         ],
-        tools: ["CyberChef", "Vigenere Cipher Decoder", "Base64 Decoder"],
+        tools: ["CyberChef", "Base64 Logic", "ROT13 Substitution"],
         hints: [
-            "Layer 1: 'My mother used to make roti using base on a roti board' -> ROT13 + Base64.",
-            "Layer 2: 'The base needs to be reversed' -> Base64 Decode then Reverse string.",
-            "The final key is displayed after solving Layer 2."
+            "Penalty: 120s (2m) per decryption layer hint.",
+            "Layer 1: 'Base on a roti board' = Base64 + ROT13.",
+            "Layer 2: 'Base needs to be reversed' = Base64 then reverse string.",
+            "The final master key appears only after both layers are cracked."
         ]
     },
     {
         level: 4,
         title: "The Cursed Library",
-        theme: "SQL Injection / Brute Force",
+        theme: "Automated OSINT & Brute Force",
         key: "DICT_ATTACK_MASTER",
         tasks: [
-            { name: "Command Injection", solution: "Type 'help' to see commands.", fragment: "DICT_" },
-            { name: "Brute Force", solution: "Run: cewl/hydra sequence.", fragment: "ATTACK_MASTER" }
+            { name: "Scraping", solution: "Run: 'cewl https://omega-corp.internal/about-us -w words.txt'", fragment: "DICT_" },
+            { name: "Modification", solution: "Run: 'sed s/$/2026/ words.txt > final.txt' (Appends year).", fragment: "ATTACK" },
+            { name: "Breach", solution: "Run: 'hydra -l admin -P final.txt 10.10.10.55' to find password.", fragment: "MASTER" }
         ],
-        tools: ["Terminal", "cewl", "hydra"],
+        tools: ["Terminal (Kali)", "CeWL (Scraper)", "Hydra (Brute Force)"],
         hints: [
-            "Harvest words from the 'About Us' page using 'cewl'.",
-            "The password policy requires the current year (2026) appended to words.",
-            "Use 'sed' to modify your wordlist before running 'hydra'."
+            "Penalty: 120s (2m) per terminal logic hint.",
+            "The library contains the 'Seeds' (words) on the About Us page.",
+            "Passwords for 2026 require the year appended to company keywords (e.g., Titan2026).",
+            "Use 'cat' to verify your wordlists before launching the attack."
         ]
     },
     {
         level: 5,
         title: "The Shadow Heart",
-        theme: "Network Forensics",
+        theme: "Advanced Network Forensics",
         key: "P64P_4N4L7S1S_SU55355FUL_4624A8B6",
         tasks: [
-            { name: "Traffic Analysis", solution: "Download 'traffic_dump.pcap'.", fragment: "PCAP" },
-            { name: "Hint Penalty", solution: "3 Minute Penalty for hint usage.", fragment: "FTP" },
-            { name: "Flag Extraction", solution: "Filter FTP/TCP stream. Flag: 'P64P_4N4L7S1S_SU55355FUL_4624A8B6'", fragment: "Flag" }
+            { name: "Ingestion", solution: "Download 'traffic_dump.pcap' for local analysis.", fragment: "P64P" },
+            { name: "Interception", solution: "Analyze TCP/HTTP streams for sensitive strings.", fragment: "AN4L7S1S" },
+            { name: "Flag Recovery", solution: "The hidden flag is buried in traffic: 'P64P_4N4L7S1S_SU55355FUL_4624A8B6'", fragment: "MASTER" }
         ],
-        tools: ["Wireshark", "Network Miner", "Packet Analysis"],
+        tools: ["Wireshark", "TShark", "Follow TCP Stream"],
         hints: [
-            "The hint reveals: 'Today i am travelling from Chennai(20) to Delhi(21)...'",
-            "Filter for HTTP or FTP traffic to find file transfers.",
-            "Look for a file named 'flag.txt' or similar inside the packet capture."
+            "Penalty: 180s (3m) for High-Level Intelligence.",
+            "Transmission: 'Today i am travelling from Chennai(20) to Delhi(21) for Cyber Catalyst 2026'",
+            "Look for uncommon protocols or large data transfers in the dump.",
+            "The flag structure matches: P64P_4N4L7S1S..."
         ]
     }
 ];
