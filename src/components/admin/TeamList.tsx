@@ -147,7 +147,10 @@ export const TeamList: React.FC<TeamListProps> = ({
                 }
 
                 if (start && end) {
-                    return formatTime((end - start) / 1000);
+                    const limitMs = t.start_time ? new Date(t.start_time).getTime() + 3000 * 1000 : Infinity;
+                    const cappedStart = Math.min(start, limitMs);
+                    const cappedEnd = Math.min(end, limitMs);
+                    return formatTime(Math.max(0, (cappedEnd - cappedStart) / 1000));
                 }
                 return '-';
             };
@@ -160,7 +163,7 @@ export const TeamList: React.FC<TeamListProps> = ({
                 t.hints_used || 0,
                 `"${t.start_time ? new Date(t.start_time).toLocaleString() : '-'}"`,
                 `"${t.end_time ? new Date(t.end_time).toLocaleString() : '-'}"`,
-                t.is_completed ? formatTime(t.total_time_seconds || 0) : '-',
+                t.is_completed ? formatTime(t.total_time_seconds || 0) : '50:00',
                 getDuration(1),
                 getDuration(2),
                 getDuration(3),

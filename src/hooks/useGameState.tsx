@@ -172,7 +172,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setElapsedTime(Math.floor((now.getTime() - newStartTime.getTime()) / 1000));
 
     await saveGameState({ startTime: newStartTime });
-    toast.error(`Time Penalty Applied: -${Math.floor(seconds / 60)}m`);
+    const penaltyDisplay = seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m`;
+    toast.error(`Time Penalty Applied: -${penaltyDisplay}`);
   }, [gameState.startTime, saveGameState]);
 
   const completeSubTask = useCallback(async (level: number, taskId: string) => {

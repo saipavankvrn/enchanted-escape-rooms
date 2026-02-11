@@ -90,9 +90,17 @@ export const LevelModal: React.FC<LevelModalProps> = ({
 
                         let duration = "--";
                         if (startTime && endTime) {
-                            const start = new Date(startTime).getTime();
-                            const end = new Date(endTime).getTime();
-                            duration = formatDuration(Math.max(0, end - start));
+                            const gameLimitMs = gameStartTime ? new Date(gameStartTime).getTime() + 3000 * 1000 : null;
+                            let startMs = new Date(startTime).getTime();
+                            let endMs = new Date(endTime).getTime();
+
+                            // Cap at 50 minutes limit
+                            if (gameLimitMs) {
+                                if (startMs > gameLimitMs) startMs = gameLimitMs;
+                                if (endMs > gameLimitMs) endMs = gameLimitMs;
+                            }
+
+                            duration = formatDuration(Math.max(0, endMs - startMs));
                         }
 
                         return (

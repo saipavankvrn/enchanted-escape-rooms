@@ -40,13 +40,15 @@ const puzzles = [
     hint: "For the first, try substituting letters. For the second, reverse the layers of encoding.",
     action: "Access Decryption Module",
     secretHint: "P1: ROT13 -> Base64. P2: URL Decode -> Base64 -> Reverse.",
+    penalty: 120,
   },
   {
     title: "The Cursed Library",
     description: "Mission: You have found the hidden server for 'Omega Corp.' However, the login is locked. You need to scrape the company’s own website to build a custom password list and then use a brute-force tool to find the admin's password.",
-    hint: "A hunter doesn't bring their own bait; they find it in the environment. Scrape the 'About Us' page to find the words that will unlock the gate.",
+    hint: "Harvest their vocabulary from their story, append the current year to every word, and then overwhelm the login gate.",
     action: "Launch Terminal",
-    secretHint: "Use 'cewl' to gather words. Use 'sed' to append '2026' to them. Use 'hydra' to attack.",
+    secretHint: "Gather 'seeds' from the About page, modify the stream with 2026, and use a multi-headed attack to crack the admin code.",
+    penalty: 120,
   },
   {
     title: "The Shadow Heart",
@@ -180,7 +182,7 @@ const LevelPuzzle = ({ level, onComplete, showKeyInput, onPenalty }: LevelPuzzle
           </div>
         )}
 
-        {!showHint && puzzle.hint && level !== 2 && level !== 3 && level !== 5 && (
+        {!showHint && puzzle.hint && level !== 2 && level !== 5 && (
           <Button
             onClick={() => {
               if (puzzle.penalty && onPenalty) {
