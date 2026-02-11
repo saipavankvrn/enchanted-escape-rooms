@@ -42,7 +42,7 @@ const Index = () => {
             5 Levels • 5 Mysteries • 1 Escape
           </p>
           <p className="text-muted-foreground mb-12 max-w-md mx-auto">
-            Enter the immersive 3D escape room experience. Solve puzzles, find secret keys, 
+            Enter the immersive 3D escape room experience. Solve puzzles, find secret keys,
             and race against time to escape!
           </p>
 
@@ -85,9 +85,8 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="absolute bottom-4 left-0 right-0 text-center text-xs text-muted-foreground">
-        © 2025 Escape Room • Built with Lovable
+        © 2025 Escape Room
       </footer>
     </div>
   );
